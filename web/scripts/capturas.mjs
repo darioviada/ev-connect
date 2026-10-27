@@ -1,6 +1,9 @@
 // npm run capturas -w web — recorre el guion de demo en Chromium (Playwright) y guarda una captura de
 // cada pantalla en docs/capturas/. Requiere la base sembrada y `npm run dev` corriendo (web en :5173).
 // No escribe datos: solo navega, busca y abre pantallas.
+// Protección de costo: si el .env tiene GOOGLE_MAPS_API_KEY (y el proveedor no es offline), cada búsqueda
+// consulta la Routes API de Google. En ese caso el script no corre salvo CAPTURAS_PERMITIR_GOOGLE=1.
+import { existsSync, readFileSync } from 'node:fs';
 import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -10,6 +13,25 @@ const BASE = process.env.CAPTURAS_URL ?? 'http://localhost:5173';
 const SALIDA = path.resolve(fileURLToPath(new URL('.', import.meta.url)), '../../docs/capturas');
 const MOVIL = { width: 390, height: 844 };
 const ESCRITORIO = { width: 1440, height: 900 };
+
+const archivoEnv = path.resolve(fileURLToPath(new URL('.', import.meta.url)), '../../.env');
+if (existsSync(archivoEnv)) {
+  const env = Object.fromEntries(
+    readFileSync(archivoEnv, 'utf8')
+      .split(/\r?\n/)
+      .map((l) => l.match(/^\s*([A-Z_]+)\s*=\s*(.*?)\s*$/))
+      .filter(Boolean)
+      .map((m) => [m[1], m[2]]),
+  );
+  const usaGoogle = Boolean(env.GOOGLE_MAPS_API_KEY) && env.ROUTING_PROVIDER !== 'offline';
+  if (usaGoogle && process.env.CAPTURAS_PERMITIR_GOOGLE !== '1') {
+    console.error(
+      'El .env tiene una clave de Google: las búsquedas del recorrido consultarían la Routes API (con costo).\n' +
+        'Usá ROUTING_PROVIDER=offline para las capturas, o CAPTURAS_PERMITIR_GOOGLE=1 si querés usar Google.',
+    );
+    process.exit(1);
+  }
+}
 
 await mkdir(SALIDA, { recursive: true });
 const navegador = await chromium.launch();
