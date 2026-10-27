@@ -81,6 +81,13 @@ export function PuntoMapa({ posicion, tipo }: { posicion: LatLng; tipo: 'origen'
   return <Marker position={[posicion.lat, posicion.lng]} icon={iconoPunto(tipo)} />;
 }
 
+/** Camino real por calles (trazado de Google). */
+export function LineaTrazado({ puntos }: { puntos: [number, number][] }) {
+  return (
+    <Polyline positions={puntos} pathOptions={{ color: '#0c7f57', weight: 5, opacity: 0.85 }} />
+  );
+}
+
 /** Línea punteada origen → destino (recta: el modo offline no calcula el trazado real). */
 export function LineaRuta({ origen, destino }: { origen: LatLng; destino: LatLng }) {
   return (

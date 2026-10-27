@@ -133,3 +133,9 @@
     border-radius: 0;
   }
 }
+
+.leyenda {
+  margin: 0 0 var(--espacio-3);
+  color: var(--color-texto-secundario);
+  font-size: 0.85rem;
+}

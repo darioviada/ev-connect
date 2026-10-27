@@ -4,7 +4,13 @@ import { Marker } from 'react-leaflet';
 import { useNavigate, useSearchParams } from 'react-router';
 import { mensajeDeError } from '../../api/cliente';
 import { iconoCargador } from '../../components/Mapa/iconos';
-import { AjustarVista, LineaRuta, MapaBase, PuntoMapa } from '../../components/Mapa/Mapa';
+import {
+  AjustarVista,
+  LineaRuta,
+  LineaTrazado,
+  MapaBase,
+  PuntoMapa,
+} from '../../components/Mapa/Mapa';
 import { TarjetaRecomendacion } from '../../components/Resultados/TarjetaRecomendacion';
 import s from '../../components/Resultados/Resultados.module.css';
 import { Alerta, BotonIcono, Cargando, Vacio } from '../../components/ui';
@@ -53,7 +59,11 @@ export default function ResultadosMapa() {
         {busqueda.modo === 'ruta' && busqueda.destino && (
           <>
             <PuntoMapa posicion={busqueda.destino} tipo="destino" />
-            <LineaRuta origen={busqueda.origen} destino={busqueda.destino} />
+            {r?.trazado ? (
+              <LineaTrazado puntos={r.trazado.puntos} />
+            ) : (
+              <LineaRuta origen={busqueda.origen} destino={busqueda.destino} />
+            )}
           </>
         )}
         {[...recs].reverse().map((rec) => (
@@ -78,6 +88,13 @@ export default function ResultadosMapa() {
           </Alerta>
         )}
         {r?.sinResultados && <p>{r.sinResultados.mensaje}</p>}
+        {busqueda.modo === 'ruta' && r && (
+          <p className={s.leyenda}>
+            {r.trazado
+              ? `Recorrido por calles: ${r.trazado.distanciaKm.toLocaleString('es-AR')} km, ~${r.trazado.duracionMin} min (Google, sin tráfico).`
+              : 'Línea recta entre origen y destino: el modo offline no calcula el recorrido por calles.'}
+          </p>
+        )}
         {recs.length > 0 && (
           <>
             <h2 className={s.conteo}>

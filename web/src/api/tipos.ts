@@ -132,6 +132,13 @@ export interface ResultadoRecomendacion {
   origen: LatLng;
   destino: LatLng | null;
   proveedorRutas: string;
+  /** Camino real por calles (solo con Google en modo ruta); null → se dibuja una recta. */
+  trazado: {
+    puntos: [number, number][];
+    distanciaKm: number;
+    duracionMin: number;
+    fuente: 'google' | 'google-cache';
+  } | null;
   advertencias: string[];
   meta: {
     candidatosEvaluados: number;
