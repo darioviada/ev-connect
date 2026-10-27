@@ -105,3 +105,32 @@ La preselección por corredor (`ST_DWithin` contra la línea origen→destino, o
 - **(a)** Ordenar por la posición a lo largo de la ruta (`ST_LineLocatePoint`) en lugar de por la distancia a la línea.
 - **(b)** Repartir los candidatos en tramos de la ruta.
 - **(c)** Dejarlo como está y documentarlo como limitación.
+
+## 2026-10-27 — Fase 2
+
+### D-015 · Alta automática del usuario en cada solicitud autenticada
+- **Decisión:** el middleware `autenticar` crea el registro en `usuario` la primera vez que ve un `sub`. No solo lo hace `GET /yo`, como dice el SPEC. Si el correo del token cambió, lo actualiza.
+- **Motivo:** en modo Cognito un usuario puede llegar a cualquier endpoint protegido sin haber pasado antes por `/yo`. Sin la fila en `usuario` no hay `usuario_id` para sus reservas o vehículos.
+- **Impacto:** `/yo` sigue respondiendo el perfil como define el SPEC. Si el correo ya pertenece a otra cuenta, la respuesta es 409 `EMAIL_EN_USO`.
+
+### D-016 · Token del modo local
+- HS256 solamente. Emisor `ev-connect-local`, audiencia `ev-connect` y vencimiento de 8 horas.
+- Lleva las mismas claims que un ID token de Cognito: `sub`, `email`, `name`, `cognito:groups` y `token_use: "id"`.
+- El rol se toma de `dev_credencial.rol` al iniciar sesión. Si un admin cambia el rol de alguien (P2), el cambio rige desde su próximo login.
+- **Verificado contra la documentación de `aws-jwt-verify` 5.2.1:** el modo Cognito usa `CognitoJwtVerifier.create({ userPoolId, tokenUse: "id", clientId })`. El verificador valida firma (JWKS del User Pool), emisor, audiencia, vencimiento y `token_use`. Las claves se descargan recién al verificar el primer token válido, así que no hace falta conexión para arrancar ni para los tests.
+
+### D-017 · Comportamiento de autenticación
+- **Token inválido:** un token presente pero inválido recibe **401 aunque la ruta admita invitados**. No se degrada a invitado: así un token vencido no pasa inadvertido.
+- **Correos:** se guardan normalizados (sin espacios y en minúsculas).
+- **Login local:** devuelve el mismo error y tarda lo mismo si el correo no existe o si la contraseña es incorrecta (compara contra un hash señuelo), para no revelar qué correos están registrados.
+- **Usuario deshabilitado:** recibe 403 `USUARIO_INACTIVO` también al iniciar sesión.
+
+### D-018 · Límite de intentos en registro y login local
+- **Decisión:** `express-rate-limit` en `/auth/local/*`: 20 intentos cada 15 minutos por IP. Al superarlo responde 429 `DEMASIADOS_INTENTOS`.
+- **Motivo:** protección básica contra fuerza bruta. El SPEC solo pide límite en `/recomendaciones` y `/geocodificar`, que se agregan en la Fase 4.
+- **Impacto:** detrás del Application Load Balancer hay que configurar `trust proxy` para que el límite use la IP real del cliente. Va en la Fase 7.
+
+### D-019 · Alcance de los tests de la Fase 2
+- **Permisos:** se prueban con rutas de prueba (invitado, user, admin, dueño, deshabilitado). La matriz de SPEC §2 sobre los endpoints reales se completa en la Fase 4, cuando existan.
+- **Cognito:** se prueba con un verificador simulado y, además, con el verificador real ante un token mal formado (no sale a la red).
+- **Independencia del orden:** detecté y corregí tests que dependían del orden de ejecución dentro de su archivo. Ahora cada test arma su propio estado. Se verificó con `vitest --sequence.shuffle` en varias corridas.
