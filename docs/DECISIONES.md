@@ -134,3 +134,54 @@ La preselección por corredor (`ST_DWithin` contra la línea origen→destino, o
 - **Permisos:** se prueban con rutas de prueba (invitado, user, admin, dueño, deshabilitado). La matriz de SPEC §2 sobre los endpoints reales se completa en la Fase 4, cuando existan.
 - **Cognito:** se prueba con un verificador simulado y, además, con el verificador real ante un token mal formado (no sale a la red).
 - **Independencia del orden:** detecté y corregí tests que dependían del orden de ejecución dentro de su archivo. Ahora cada test arma su propio estado. Se verificó con `vitest --sequence.shuffle` en varias corridas.
+
+## 2026-10-27 — Fase 3
+
+### D-020 · Respuestas del autor a las dudas abiertas (se implementan en la Fase 4)
+1. **Preselección en modo ruta:** se ordena por el avance sobre la ruta (`ST_LineLocatePoint`). Ver la aclaración de D-025.
+2. **Reserva `pendiente`:** el usuario reservó, pero el dueño del cargador todavía no la aceptó. Interpretación a confirmar:
+   - Una reserva en un cargador **privado** nace `pendiente`; en uno **público**, `confirmada`, porque no hay dueño que apruebe.
+   - El dueño (o un admin) la **acepta** y pasa a `confirmada`, o la **rechaza** y pasa a `cancelada`.
+   - Mientras está pendiente, el horario queda bloqueado (la restricción `EXCLUDE` solo excluye las canceladas), y el motor la cuenta como ocupación.
+   - Se agregan endpoints que el SPEC §8 no tenía: `PATCH /reservas/:id/aceptar`, `PATCH /reservas/:id/rechazar` y un listado de las reservas recibidas en los cargadores propios. No hay notificaciones (fuera de alcance): el dueño ve sus pendientes en "Mis cargadores".
+3. **Validación de reservas:** tienen que caer dentro de las franjas de disponibilidad del cargador y no pueden estar en el pasado. Si no, la API responde 400.
+
+### D-021 · Detalles del motor no fijados por el SPEC
+- **Ventana de carga:** tiene que caber entera dentro de una franja; no se admite una carga partida. La espera máxima de 120 minutos es **total**, sumando la espera por horario y la espera por reservas.
+- **`horarioCarga` en las métricas:** fecha y horas locales de la carga estimada, para precargar la reserva en la pantalla de detalle. Si la carga terminara después de medianoche, se informa hasta las 23:59, porque las reservas no cruzan medianoche.
+- **Modo ruta:**
+  - `viajeMin` es el tiempo de origen a cargador (determina la hora de llegada) y se agrega `desvioMin`. `totalMin` = viaje + espera + carga.
+  - El desvío nunca es negativo. Con distancias reales de Google podría dar un poco menos que cero.
+  - El alcance se evalúa solo hasta el cargador: no se verifica que, después de cargar, se llegue al destino (sería planificar varias paradas, fuera de alcance).
+- **`desglose`:** para cada criterio informa valor, valor normalizado, peso y **aporte** = 100 · peso · (1 − normalizado). La suma de los aportes es el score, lo que facilita mostrar "¿Por qué lo recomendamos?".
+- **Advertencias por recomendación:** poca batería al llegar (menos del 15 %), espera por horario, espera por reserva, y en cargadores privados que la reserva queda pendiente de aprobación del dueño.
+- **Compatibilidad:** se aplica literal la regla simplificada del SPEC. Por ejemplo, un vehículo CHAdeMO no usa cargadores Tipo 2, aunque en la realidad muchos tengan entrada AC.
+- **Validación de la entrada:** si es inválida (batería fuera de 0–100, modo ruta sin destino), el motor lanza un error. La API valida antes con `zod`.
+- **Redondeo de la salida:** distancias a 2 decimales, minutos y score a 1, costo a pesos enteros. El orden usa los valores sin redondear.
+
+### D-022 · Interfaz del RoutingProvider
+- **Decisión:** `matrix()` devuelve `{ celdas, elementosConsultados, elementosDesdeCache, advertencias }` en lugar de `Celda[][]` como dice SPEC §7.
+- **Motivo:** el resultado de cada búsqueda tiene que informar la cantidad de elementos consultados (`meta`) y el aviso de caída a offline. Hacerlo con un estado compartido en el proveedor no sería seguro con solicitudes simultáneas.
+- **Google:**
+  - Solo se piden los orígenes y destinos que faltan en la caché, y en lotes de 625 elementos como máximo.
+  - Un par sin ruta (`condition` distinta de `ROUTE_EXISTS`) se estima offline.
+  - En JSON, una distancia omitida significa 0 m.
+
+### D-023 · Geocodificación
+- **Ubicación del código:** `api/src/routing/geocodificacion/`, junto a rutas.
+- **Lista `static`:** 32 lugares con alcance nacional (D-001): barrios de Córdoba, localidades de los corredores y ciudades del país. Las coordenadas son aproximadas.
+- **`nominatim`**, según la política de uso verificada el 27/10/2026:
+  - Cola global con 1 pedido por segundo como máximo, `User-Agent` propio y caché en memoria de 24 horas.
+  - **El autocompletado está prohibido:** en la Fase 5, la interfaz busca solo cuando el usuario confirma (Enter o botón), nunca mientras escribe.
+  - Se apaga sin actualizar el software con `GEOCODING_PROVIDER=static`.
+
+### D-024 · Cobertura de tests
+- `npm run test:coverage -w api` mide la cobertura de `src/engine` y `src/routing`. Al cierre de la Fase 3: motor con 98.8 % de líneas y 93.9 % de ramas; proveedores con 100 % de líneas. Lo que queda sin cubrir son guardas defensivas.
+
+### D-025 · Aclaración sobre la preselección en modo ruta (a confirmar antes de la Fase 4)
+Ordenar por avance de **menor a mayor** vuelve a priorizar los cargadores cercanos al origen, que son el problema original: el centro de la ciudad está al comienzo de la ruta. Propuesta de implementación:
+- Dividir la ruta en tantos tramos como candidatos (`CANDIDATES_LIMIT`, 8) según `ST_LineLocatePoint`.
+- Tomar de cada tramo el cargador más cercano a la línea.
+- Si algún tramo queda vacío, completar con los más cercanos a la línea.
+
+Así los 8 candidatos quedan **repartidos a lo largo del recorrido** y el motor elige entre ellos por desvío, espera, carga y costo.
