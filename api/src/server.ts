@@ -4,6 +4,8 @@ import { crearAuthProvider } from './auth/index.js';
 import { cargarConfig, ConfigError, type Config } from './config/index.js';
 import { crearKnex } from './db/knex.js';
 import { crearLogger } from './logger.js';
+import { crearGeocodingProvider } from './routing/geocodificacion/index.js';
+import { CacheRutasPg, crearRoutingProvider } from './routing/index.js';
 
 let config: Config;
 try {
@@ -20,8 +22,15 @@ const logger = crearLogger(config);
 for (const advertencia of config.advertencias) logger.warn(advertencia);
 
 const db = crearKnex(config.databaseUrl, config.tz);
-const auth = crearAuthProvider(config);
-const app = createApp({ config, logger, db, auth });
+const app = createApp({
+  config,
+  logger,
+  db,
+  auth: crearAuthProvider(config),
+  rutas: crearRoutingProvider(config, { cache: new CacheRutasPg(db), logger }),
+  geocoding: crearGeocodingProvider(config),
+  reloj: { ahora: () => new Date(), zonaHoraria: config.tz },
+});
 
 const server = app.listen(config.port, (error?: Error) => {
   if (error) {
