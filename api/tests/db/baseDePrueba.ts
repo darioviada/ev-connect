@@ -2,6 +2,7 @@
 // Se crea si no existe y se migra al empezar. Nunca toca la base de desarrollo.
 import type { Knex } from 'knex';
 import { cargarArchivoEnv } from '../../src/config/index.js';
+import { asegurarBaseDeDatos, urlConSufijo } from '../../src/db/crearBase.js';
 import { crearKnex } from '../../src/db/knex.js';
 import { migrarTodo } from '../../src/db/migraciones.js';
 
@@ -9,34 +10,15 @@ export function urlBaseDePrueba(): string {
   cargarArchivoEnv();
   if (process.env.TEST_DATABASE_URL) return process.env.TEST_DATABASE_URL;
   const base = process.env.DATABASE_URL;
-  if (!base)
+  if (!base) {
     throw new Error('Falta DATABASE_URL (o TEST_DATABASE_URL) para los tests de integración.');
-  const url = new URL(base);
-  url.pathname = `/${url.pathname.slice(1)}_test`;
-  return url.toString();
+  }
+  return urlConSufijo(base, '_test');
 }
 
 export async function prepararBaseDePrueba(): Promise<Knex> {
   const url = urlBaseDePrueba();
-  const nombre = decodeURIComponent(new URL(url).pathname.slice(1));
-  if (!/^[a-z0-9_]+$/.test(nombre)) throw new Error(`Nombre de base de prueba inválido: ${nombre}`);
-
-  const urlAdmin = new URL(url);
-  urlAdmin.pathname = '/postgres';
-  const admin = crearKnex(urlAdmin.toString());
-  try {
-    const existe = await admin.raw('SELECT 1 FROM pg_database WHERE datname = ?', [nombre]);
-    if (existe.rows.length === 0) await admin.raw('CREATE DATABASE ??', [nombre]);
-  } catch (error) {
-    throw new Error(
-      `No se pudo preparar la base de pruebas en ${urlAdmin.host}. ` +
-        `¿Está levantada la base (npm run db:up)? Detalle: ${(error as Error).message}`,
-      { cause: error },
-    );
-  } finally {
-    await admin.destroy();
-  }
-
+  await asegurarBaseDeDatos(url);
   const db = crearKnex(url);
   await migrarTodo(db, 'local');
   return db;

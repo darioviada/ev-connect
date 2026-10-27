@@ -4,24 +4,14 @@ import { Router } from 'express';
 import { rateLimit } from 'express-rate-limit';
 import type { Knex } from 'knex';
 import { z } from 'zod';
-import { recomendar } from '../../engine/recomendar.js';
-import { esCompatible } from '../../engine/reglas.js';
-import type { CandidatoMotor, TipoConector, VehiculoMotor } from '../../engine/tipos.js';
+import type { TipoConector, VehiculoMotor } from '../../engine/tipos.js';
 import { AppError } from '../../errors.js';
 import { autenticar, type UsuarioAutenticado } from '../../middleware/auth.js';
 import { haversineM } from '../../routing/offline.js';
-import type { Celda } from '../../routing/tipos.js';
-import {
-  aCargadorMotor,
-  aFranjaMotor,
-  franjasPorCargador,
-  type FilaCargador,
-} from '../cargadores/cargadores.repo.js';
 import type { DependenciasApi } from '../comun/dependencias.js';
-import { CONECTORES, esquemaLatLng, hhmm } from '../comun/esquemas.js';
-import { fechaRelativa } from '../comun/reloj.js';
+import { esquemaLatLng } from '../comun/esquemas.js';
 import { esquemaDatosVehiculo } from '../vehiculos/vehiculos.routes.js';
-import { preseleccionar } from './preseleccion.js';
+import { calcularRecomendacion } from './servicio.js';
 
 const esquemaPedido = z
   .object({
@@ -108,12 +98,6 @@ async function resolverVehiculo(
   return { descripcion: `${f.marca} ${f.modelo}`, motor: aMotor(f) };
 }
 
-const aTrayecto = (c: Celda) => ({
-  distanciaKm: c.distanciaM / 1000,
-  duracionMin: c.duracionS / 60,
-  fuente: c.fuente,
-});
-
 export function recomendacionesRouter(deps: DependenciasApi): Router {
   const { db, config, rutas, reloj } = deps;
   const router = Router();
@@ -139,99 +123,29 @@ export function recomendacionesRouter(deps: DependenciasApi): Router {
       const pedido = esquemaPedido.parse(req.body);
       const vehiculo = await resolverVehiculo(db, pedido.vehiculo, req.usuario);
 
-      // Preselección: primero solo compatibles; si no hay ninguno, se traen los cercanos para que el
-      // motor informe SIN_COMPATIBLES con el motivo de cada descarte.
-      const compatibles = CONECTORES.filter((c) => esCompatible(vehiculo.motor, c));
-      const parametros = {
-        modo: pedido.modo,
-        origen: pedido.origen,
-        ...(pedido.destino ? { destino: pedido.destino } : {}),
-        radioKm: config.engine.searchRadiusKm,
-        corredorKm: config.engine.corridorKm,
-        limite: config.engine.candidatesLimit,
-      };
-      let pre = await preseleccionar(db, { ...parametros, conectores: compatibles });
-      if (pre.filas.length === 0) {
-        pre = await preseleccionar(db, { ...parametros, conectores: CONECTORES });
-      }
-      const filas: FilaCargador[] = pre.filas;
-      const destinos = filas.map((f) => ({ lat: f.lat, lng: f.lng }));
-
-      // Rutas: origen → cargadores (y en modo ruta, también → destino y cargadores → destino).
-      let elementosConsultados = 0;
-      let elementosDesdeCache = 0;
-      const advertencias = new Set<string>();
-      const sumar = (r: Awaited<ReturnType<typeof rutas.matrix>>) => {
-        elementosConsultados += r.elementosConsultados;
-        elementosDesdeCache += r.elementosDesdeCache;
-        r.advertencias.forEach((a) => advertencias.add(a));
-        return r.celdas;
-      };
-
-      let desdeOrigen: Celda[] = [];
-      let haciaDestino: Celda[] = [];
-      let directo: Celda | undefined;
-      if (filas.length > 0) {
-        if (pedido.modo === 'ruta') {
-          const fila = sumar(
-            await rutas.matrix([pedido.origen], [...destinos, pedido.destino!]),
-          )[0]!;
-          desdeOrigen = fila.slice(0, -1);
-          directo = fila.at(-1);
-          haciaDestino = sumar(await rutas.matrix(destinos, [pedido.destino!])).map((f) => f[0]!);
-        } else {
-          desdeOrigen = sumar(await rutas.matrix([pedido.origen], destinos))[0]!;
-        }
-      } else if (pedido.modo === 'ruta') {
-        // Sin candidatos no hace falta consultar rutas; el motor devuelve SIN_CARGADORES_CERCANOS.
-        directo = { distanciaM: 0, duracionS: 0, fuente: 'offline-estimado' };
-      }
-
-      // Franjas y reservas activas (pendientes o confirmadas) cerca de la ventana de búsqueda.
-      const ids = filas.map((f) => f.id);
-      const franjas = await franjasPorCargador(db, ids);
-      const reservas =
-        ids.length === 0
-          ? []
-          : await db('reserva')
-              .whereIn('cargador_id', ids)
-              .whereNot('estado', 'cancelada')
-              .whereBetween('fecha', [fechaRelativa(reloj, -1), fechaRelativa(reloj, 2)])
-              .select('cargador_id', 'fecha', 'hora_inicio', 'hora_fin');
-
-      const candidatos: CandidatoMotor[] = filas.map((f, i) => ({
-        cargador: aCargadorMotor(f),
-        desdeOrigen: aTrayecto(desdeOrigen[i]!),
-        ...(pedido.modo === 'ruta' ? { haciaDestino: aTrayecto(haciaDestino[i]!) } : {}),
-        franjas: franjas.get(f.id)!.map(aFranjaMotor),
-        reservas: reservas
-          .filter((r) => r.cargador_id === f.id)
-          .map((r) => ({
-            fecha: r.fecha,
-            horaInicio: hhmm(r.hora_inicio),
-            horaFin: hhmm(r.hora_fin),
-          })),
-      }));
+      const calculo = await calcularRecomendacion(
+        { db, rutas, engine: config.engine, reloj },
+        {
+          vehiculo: vehiculo.motor,
+          bateriaPct: pedido.bateriaPct,
+          modo: pedido.modo,
+          origen: pedido.origen,
+          ...(pedido.destino ? { destino: pedido.destino } : {}),
+        },
+      );
+      const { resultado, preseleccion: pre } = calculo;
 
       // Modo ruta: camino real por calles para dibujar en el mapa (solo con Google; offline → null).
       const trazado =
         pedido.modo === 'ruta' ? await rutas.trazado(pedido.origen, pedido.destino!) : null;
       const r5 = (x: number) => Math.round(x * 1e5) / 1e5;
 
-      const resultado = recomendar({
-        vehiculo: vehiculo.motor,
-        bateriaPct: pedido.bateriaPct,
-        modo: pedido.modo,
-        origen: pedido.origen,
-        ...(pedido.destino ? { destino: pedido.destino } : {}),
-        ...(directo ? { trayectoDirecto: aTrayecto(directo) } : {}),
-        ahora: reloj.ahora(),
-        candidatos,
-        config: { zonaHoraria: reloj.zonaHoraria },
-      });
-
       deps.logger.info(
-        { candidatos: filas.length, elementosConsultados, proveedor: rutas.nombre },
+        {
+          candidatos: pre.filas.length,
+          elementosConsultados: calculo.elementosConsultados,
+          proveedor: rutas.nombre,
+        },
         'Recomendación calculada',
       );
 
@@ -250,13 +164,13 @@ export function recomendacionesRouter(deps: DependenciasApi): Router {
               fuente: trazado.fuente,
             }
           : null,
-        advertencias: [...advertencias],
+        advertencias: calculo.advertencias,
         meta: {
-          candidatosEvaluados: filas.length,
+          candidatosEvaluados: pre.filas.length,
           distanciaPreseleccionKm: pre.distanciaKm,
           preseleccionAmpliada: pre.ampliada,
-          elementosConsultados,
-          elementosDesdeCache,
+          elementosConsultados: calculo.elementosConsultados,
+          elementosDesdeCache: calculo.elementosDesdeCache,
         },
       });
     },
