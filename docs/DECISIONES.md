@@ -139,7 +139,7 @@ La preselección por corredor (`ST_DWithin` contra la línea origen→destino, o
 
 ### D-020 · Respuestas del autor a las dudas abiertas (se implementan en la Fase 4)
 1. **Preselección en modo ruta:** se ordena por el avance sobre la ruta (`ST_LineLocatePoint`). Ver la aclaración de D-025.
-2. **Reserva `pendiente`:** el usuario reservó, pero el dueño del cargador todavía no la aceptó. Interpretación a confirmar:
+2. **Reserva `pendiente`:** el usuario reservó, pero el dueño del cargador todavía no la aceptó. Interpretación confirmada por el autor:
    - Una reserva en un cargador **privado** nace `pendiente`; en uno **público**, `confirmada`, porque no hay dueño que apruebe.
    - El dueño (o un admin) la **acepta** y pasa a `confirmada`, o la **rechaza** y pasa a `cancelada`.
    - Mientras está pendiente, el horario queda bloqueado (la restricción `EXCLUDE` solo excluye las canceladas), y el motor la cuenta como ocupación.
@@ -178,7 +178,7 @@ La preselección por corredor (`ST_DWithin` contra la línea origen→destino, o
 ### D-024 · Cobertura de tests
 - `npm run test:coverage -w api` mide la cobertura de `src/engine` y `src/routing`. Al cierre de la Fase 3: motor con 98.8 % de líneas y 93.9 % de ramas; proveedores con 100 % de líneas. Lo que queda sin cubrir son guardas defensivas.
 
-### D-025 · Aclaración sobre la preselección en modo ruta (a confirmar antes de la Fase 4)
+### D-025 · Preselección en modo ruta por tramos (confirmada por el autor)
 Ordenar por avance de **menor a mayor** vuelve a priorizar los cargadores cercanos al origen, que son el problema original: el centro de la ciudad está al comienzo de la ruta. Propuesta de implementación:
 - Dividir la ruta en tantos tramos como candidatos (`CANDIDATES_LIMIT`, 8) según `ST_LineLocatePoint`.
 - Tomar de cada tramo el cargador más cercano a la línea.
