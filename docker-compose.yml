@@ -1,0 +1,28 @@
+# EVConnect — servicios locales.
+# Fase 0: solo la base de datos. El servicio de la API (imagen única API + web) se agrega en la Fase 7.
+name: ev-connect
+
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: tfg
+      POSTGRES_PASSWORD: tfg # credencial solo para la base local de demostración
+      POSTGRES_DB: tfg
+      TZ: America/Argentina/Cordoba
+    ports:
+      - '5432:5432'
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      # Por TCP (-h 127.0.0.1): durante la inicialización el servidor temporal solo escucha por socket,
+      # así "healthy" significa que ya acepta conexiones de la API.
+      test: ['CMD-SHELL', 'pg_isready -h 127.0.0.1 -U tfg -d tfg']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+
+volumes:
+  db_data:

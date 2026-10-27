@@ -1,0 +1,24 @@
+# Dependencias y builds
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+
+# Variables de entorno (secretos): nunca al repositorio
+.env*
+!.env.example
+
+# Logs y sistema
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
+
+# Editores
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# Pruebas E2E (P2)
+playwright-report/
+test-results/
