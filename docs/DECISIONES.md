@@ -224,3 +224,37 @@ Así los 8 candidatos quedan **repartidos a lo largo del recorrido** y el motor 
 
 ### D-031 · Seed: nombres de cargadores únicos
 - Dos cargadores públicos del Centro se llamaban "Electrolinera Centro". El tipo de lugar ahora rota con un contador global, y un test verifica que no haya nombres repetidos. Cambian algunos nombres y horarios de estacionamientos respecto de los ejemplos de D-026.
+
+## 2026-10-27 — Fase 5
+
+### D-032 · Colores ajustados por contraste (aprobado por el autor)
+Para cumplir un contraste de al menos 4.5:1 en texto normal (WCAG AA), cuatro tokens se oscurecieron levemente respecto de SPEC §10.1:
+
+| Token | SPEC | Usado | Contraste |
+|---|---|---|---|
+| Primario | `#0F9D6B` | `#0C7F57` | Texto blanco encima: 5.01:1 |
+| Atenuado | `#9A9D93` | `#6E7069` | Sobre fondo y sobre blanco: 4.6:1 o más |
+| Pendiente | `#B36B00` | `#A36100` | Sobre su fondo: 4.62:1 |
+| Error / favorito | `#D4534E` | `#BC4945` | 5.03:1 |
+
+El resto de los tokens no cambia. Están en `web/src/styles/tokens.css`.
+
+### D-033 · Decisiones del frontend
+- **Estado de la búsqueda en la URL** (`?b=` con el pedido en base64url). Sobrevive a ir al detalle y volver, a recargar la página y a compartir el enlace. El resultado queda en la caché de TanStack Query, así que volver no repite la consulta. El formulario del Home se recuerda en `sessionStorage`.
+- **Primera visita:** sin sesión se muestra `/inicio`. "Continuar como invitado" se recuerda en la pestaña (`sessionStorage`).
+- **Sesión local:** el JWT se guarda en `localStorage` (solo modo demo). En modo Cognito los tokens los maneja Amplify, que se carga por demanda (`import()`): en modo local no se descarga.
+- **Geocodificación sin autocompletado** (política de Nominatim, D-023): busca recién con Enter o con el botón de buscar.
+- **Elegir en el mapa:** el mapa (Leaflet) se carga recién al abrirlo. La vista de resultados en mapa también se carga por demanda.
+- **Línea de la ruta:** en el mapa es recta, porque el proveedor offline no calcula el trazado (SPEC §10.2).
+- **Rutas guardadas:** se nombran "Origen → Destino" para recuperar las etiquetas al reutilizarlas desde el buscador o desde Favoritos.
+- **Diferencias con los mockups:**
+  - No hay foto del auto en "Detalle del vehículo": no hay imágenes con licencia, se usa un ícono.
+  - No hay "¿Olvidaste tu contraseña?": en modo local no hay envío de correos. En modo Cognito podría agregarse con Amplify (fuera del alcance de la demo).
+  - En móvil el fondo es blanco y en escritorio gris con tarjetas blancas, como en los mockups.
+  - Los horarios iguales se agrupan ("Todos los días", "Lunes a viernes").
+- **Rutas agregadas a las de SPEC §10.2:**
+  - `/vehiculos/:id/editar`, `/mis-cargadores` y `/mis-cargadores/:id/editar`.
+  - `/mis-cargadores` es la gestión de los cargadores propios y de las reservas recibidas (aceptar o rechazar, D-020).
+- **Administración (P2):** la moderación lista solo cargadores activos, porque `GET /cargadores` no devuelve los inactivos. Un cargador desactivado por un admin lo reactiva su dueño (o un admin desde la API). Es una limitación aceptada para la P2.
+- **Capturas:** `npm run capturas -w web` recorre el guion de demo con Playwright (Chromium) y guarda 18 capturas en `docs/capturas/`. Es una herramienta de documentación, no una suite E2E (las pruebas E2E siguen como P2 opcional).
+- **Tamaño del bundle:** el paquete principal pesa unos 620 kB (180 kB comprimido), y Vite avisa porque supera los 500 kB. Leaflet y Amplify ya van en paquetes separados. No afecta a la demo; podría dividirse más por ruta si hiciera falta.
