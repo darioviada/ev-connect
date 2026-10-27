@@ -1,0 +1,41 @@
+/* Tokens de diseño (docs/SPEC.md §10.1). Usar siempre estas variables, nunca colores sueltos. */
+:root {
+  /* Colores */
+  --color-primario: #0f9d6b;
+  --color-primario-claro: #f1fbf6; /* fondo de elementos seleccionados */
+  --color-fondo: #f4f6f3;
+  --color-superficie: #ffffff;
+  --color-texto: #1b1d1a;
+  --color-texto-secundario: #55584f;
+  --color-texto-atenuado: #9a9d93;
+  --color-borde: #dde2dc;
+  --color-borde-suave: #e7eae4;
+  --color-pendiente: #b36b00;
+  --color-pendiente-fondo: #fff7e6;
+  --color-error: #d4534e; /* también para favoritos */
+
+  /* Tipografías */
+  --fuente-titulos: 'Sora', system-ui, sans-serif; /* títulos, botones, números */
+  --fuente-cuerpo: 'Plus Jakarta Sans', system-ui, sans-serif;
+
+  /* Radios */
+  --radio-campo: 12px;
+  --radio-boton: 14px;
+  --radio-tarjeta: 16px;
+  --radio-tarjeta-grande: 24px;
+
+  /* Espaciado (escala de 4 px) */
+  --espacio-1: 4px;
+  --espacio-2: 8px;
+  --espacio-3: 12px;
+  --espacio-4: 16px;
+  --espacio-5: 24px;
+  --espacio-6: 32px;
+  --espacio-7: 48px;
+
+  /* Foco visible (accesibilidad) */
+  --foco-anillo: 3px solid var(--color-primario);
+  --foco-separacion: 2px;
+
+  /* Puntos de quiebre: móvil primero, escritorio desde 1024 px (usar en @media) */
+}

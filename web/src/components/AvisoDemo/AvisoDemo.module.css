@@ -1,0 +1,13 @@
+.aviso {
+  position: fixed;
+  right: var(--espacio-3);
+  bottom: var(--espacio-3);
+  margin: 0;
+  padding: var(--espacio-1) var(--espacio-3);
+  border: 1px solid var(--color-borde);
+  border-radius: 999px;
+  background: var(--color-superficie);
+  color: var(--color-texto-secundario);
+  font-size: 0.75rem;
+  pointer-events: none;
+}
