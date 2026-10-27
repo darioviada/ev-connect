@@ -213,6 +213,11 @@ export function recomendacionesRouter(deps: DependenciasApi): Router {
           })),
       }));
 
+      // Modo ruta: camino real por calles para dibujar en el mapa (solo con Google; offline → null).
+      const trazado =
+        pedido.modo === 'ruta' ? await rutas.trazado(pedido.origen, pedido.destino!) : null;
+      const r5 = (x: number) => Math.round(x * 1e5) / 1e5;
+
       const resultado = recomendar({
         vehiculo: vehiculo.motor,
         bateriaPct: pedido.bateriaPct,
@@ -237,6 +242,14 @@ export function recomendacionesRouter(deps: DependenciasApi): Router {
         origen: pedido.origen,
         destino: pedido.destino ?? null,
         proveedorRutas: rutas.nombre,
+        trazado: trazado
+          ? {
+              puntos: trazado.puntos.map((p) => [r5(p.lat), r5(p.lng)]),
+              distanciaKm: Math.round(trazado.distanciaM / 100) / 10,
+              duracionMin: Math.round(trazado.duracionS / 60),
+              fuente: trazado.fuente,
+            }
+          : null,
         advertencias: [...advertencias],
         meta: {
           candidatosEvaluados: filas.length,
