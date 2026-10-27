@@ -76,6 +76,11 @@ describe('generarDatos', () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
+  it('los nombres de cargadores no se repiten', () => {
+    const nombres = datos.cargadores.map((c) => c.nombre);
+    expect(new Set(nombres).size).toBe(nombres.length);
+  });
+
   it('las reservas respetan la disponibilidad del cargador y no se solapan', () => {
     const porId = new Map(datos.cargadores.map((c) => [c.id, c]));
     const activas = datos.reservas.filter((r) => r.estado !== 'cancelada');

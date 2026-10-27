@@ -250,6 +250,7 @@ function crearCargadores(
   let iPublicoCiudad = 0;
   let iPublicoRuta = 0;
   let iPrivado = 0;
+  let iPublico = 0; // contador global: cargadores públicos de una misma zona reciben tipos de lugar distintos
 
   const ubicar = (zona: ZonaSeed) => ({
     lat: redondear(zona.lat + aleatorio.entre(-zona.dispersion, zona.dispersion), 6),
@@ -263,7 +264,7 @@ function crearCargadores(
       const plantilla = enRuta
         ? PUBLICOS_RUTA[iPublicoRuta++ % PUBLICOS_RUTA.length]!
         : PUBLICOS_CIUDAD[iPublicoCiudad++ % PUBLICOS_CIUDAD.length]!;
-      const tipoLugar = TIPOS_LUGAR_PUBLICO[(cargadores.length + k) % TIPOS_LUGAR_PUBLICO.length]!;
+      const tipoLugar = TIPOS_LUGAR_PUBLICO[iPublico++ % TIPOS_LUGAR_PUBLICO.length]!;
       const clave = `publico:${zona.clave}:${k + 1}`;
       cargadores.push({
         id: uuid(`cargador:${clave}`),
