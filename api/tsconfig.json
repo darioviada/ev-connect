@@ -1,0 +1,20 @@
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "types": ["node"],
+    "rootDir": ".",
+    "outDir": "dist",
+    "noEmit": true
+  },
+  "include": [
+    "src",
+    "migrations",
+    "migrations_dev",
+    "seeds",
+    "scripts",
+    "tests",
+    "vitest.config.ts"
+  ]
+}
