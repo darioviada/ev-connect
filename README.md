@@ -4,7 +4,7 @@ Demo funcional del Trabajo Final de Graduación (Ingeniería en Software): un si
 conveniente para un vehículo eléctrico sobre una red colaborativa de cargadores públicos y privados en Argentina
 (zona piloto del seed: Córdoba).
 
-> **Estado:** en construcción (Fase 0, andamiaje). Ver `docs/PLAN.md`.
+> **Estado:** en construcción (Fase 1, base de datos y seed). Ver `docs/PLAN.md`.
 >
 > **Datos de demostración:** todos los datos de la demo (cargadores, precios, ubicaciones, usuarios, reservas) son
 > **sintéticos**. Las especificaciones de los vehículos son aproximadas.
@@ -40,7 +40,7 @@ No hace falta ninguna cuenta externa: por defecto `AUTH_MODE=local` y `ROUTING_P
 | `npm run db:migrate`        | Aplica las migraciones                                                        |
 | `npm run db:seed`           | Carga los datos de demostración (`-- --reset` para limpiar y volver a cargar) |
 | `npm run dev`               | API y web con recarga en caliente                                             |
-| `npm test`                  | Pruebas de la API y de la web                                                 |
+| `npm test`                  | Pruebas de la API y de la web (requiere la base levantada: `npm run db:up`)   |
 | `npm run lint`              | ESLint, Prettier y verificación de tipos                                      |
 | `npm run build`             | Compila la web y la API                                                       |
 

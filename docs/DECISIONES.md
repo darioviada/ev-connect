@@ -70,3 +70,38 @@ Propuesta a confirmar con el autor antes de la Fase 5:
 - Botones con texto en Sora semibold de 18 px o más.
 - El atenuado, solo para elementos decorativos o deshabilitados.
 - O bien oscurecer levemente esos dos tonos.
+
+## 2026-10-27 — Fase 1
+
+### D-010 · Esquema: agregados que no cambian el DER
+- **Índices** en las claves foráneas más consultadas: `vehiculo_usuario(usuario_id)`, `cargador(usuario_id)`, `disponibilidad(cargador_id)`, `reserva(usuario_id)` y `ruta_guardada(usuario_id)`. Son solo rendimiento.
+- **Vista `vehiculo_usuario_detalle`:** resuelve cada dato con `COALESCE(propio, catálogo)` y agrega la columna `personalizado` (`modelo_id IS NULL`).
+- **Reservas con fin anterior al inicio:** las rechaza primero la columna generada `rango` (error de rango inválido, clase `22000`), antes que el `CHECK`. El `CHECK` actúa cuando inicio y fin son iguales. En los dos casos la reserva se rechaza. La API traducirá ambos errores a un 400 de validación (Fase 4).
+
+### D-011 · Conversión de tipos y zona horaria en el driver `pg`
+- `date` se lee como texto `YYYY-MM-DD`. Así se evita que el driver lo convierta a `Date` y lo corra de día por la zona horaria.
+- `numeric` se lee como `number`.
+- Cada conexión fija `TimeZone` con la zona de negocio (`TZ`). Usa `set_config` con un parámetro, sin concatenar texto.
+
+### D-012 · Seed
+- **Generación determinista:** semilla fija (`20261027`) e identificadores estables derivados de una clave (uuid con formato v5). La generación es una función pura (`api/seeds/generar.ts`) y la escritura en la base va aparte (`api/seeds/demo.ts`).
+- **Idempotencia:** los datos del seed se reescriben (*upsert*) por id, y lo que crearon los usuarios se conserva. Las reservas del seed tienen fechas relativas a hoy y se regeneran en cada corrida. Si alguna choca con una reserva real, se omite. `--reset` vacía todas las tablas de datos.
+- **Dueños ficticios:** 25 personas ficticias (`anfitrion-NN@demo.local`) son las dueñas de los 40 cargadores privados. No tienen credenciales, así que no pueden iniciar sesión.
+- **Modo Cognito:** con `AUTH_MODE=cognito` no se crean `admin@demo.local` ni `usuario@demo.local`, ni sus vehículos, reservas, favoritos o rutas (AWS_DEPLOY §4.5). Los cargadores son idénticos en ambos modos.
+- **Sin marcas reales:** los cargadores usan nombres genéricos ("Electrolinera Centro", "Wallbox García"). El mockup usa "YPF Ruta 9", pero los datos sintéticos no imitan redes reales. El catálogo sí usa modelos reales, con especificaciones aproximadas, más un modelo rotulado "ficticio" (solo `TIPO_2`, sin DC) para el filtro de compatibilidad.
+- **Distribución:** 45 cargadores en Córdoba capital, 6 en el corredor a Villa Carlos Paz, 5 en el corredor a Alta Gracia y 4 en Rosario y CABA (D-001). Hay 2 privados inactivos, 3 cargadores `CHADEMO` y potencias de 7.4 a 150 kW.
+- **Usuario demo:** tiene una reserva de cada estado (confirmada hoy, pendiente mañana, cancelada hace 3 días), como en el mockup "Mis reservas". Las reservas pendientes también bloquean el horario: la restricción solo excluye las canceladas.
+
+### D-013 · Tests de integración en una base aparte
+- Usan la base `<base>_test` en el mismo servidor, o `TEST_DATABASE_URL`. La crean y la migran si hace falta, así nunca tocan la base de desarrollo.
+- Cada test corre dentro de una transacción que se revierte. Los archivos se ejecutan de a uno (`fileParallelism: false`).
+- **Impacto:** `npm test` necesita la base levantada (`npm run db:up`). Si no está, el error lo indica.
+
+### D-014 · Revertir migraciones
+- `npm run db:migrate -- --down` revierte todas las migraciones. Es solo para desarrollo y borra los datos.
+
+### Observación para la Fase 4 · Preselección en modo ruta
+La preselección por corredor (`ST_DWithin` contra la línea origen→destino, ordenada por distancia y con `LIMIT 8`) incluye toda la ciudad de origen: 39 cargadores activos caen en el corredor a Carlos Paz. Ordenar por distancia a la línea no prioriza los cargadores que están más adelante en el camino. Con 8 candidatos, la recomendación en ruta podría quedar en cargadores del centro. Opciones a decidir antes de la Fase 4:
+- **(a)** Ordenar por la posición a lo largo de la ruta (`ST_LineLocatePoint`) en lugar de por la distancia a la línea.
+- **(b)** Repartir los candidatos en tramos de la ruta.
+- **(c)** Dejarlo como está y documentarlo como limitación.
