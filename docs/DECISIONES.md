@@ -258,3 +258,24 @@ El resto de los tokens no cambia. Están en `web/src/styles/tokens.css`.
 - **Administración (P2):** la moderación lista solo cargadores activos, porque `GET /cargadores` no devuelve los inactivos. Un cargador desactivado por un admin lo reactiva su dueño (o un admin desde la API). Es una limitación aceptada para la P2.
 - **Capturas:** `npm run capturas -w web` recorre el guion de demo con Playwright (Chromium) y guarda 18 capturas en `docs/capturas/`. Es una herramienta de documentación, no una suite E2E (las pruebas E2E siguen como P2 opcional).
 - **Tamaño del bundle:** el paquete principal pesa unos 620 kB (180 kB comprimido), y Vite avisa porque supera los 500 kB. Leaflet y Amplify ya van en paquetes separados. No afecta a la demo; podría dividirse más por ruta si hiciera falta.
+
+## 2026-10-28 — Trazado real de la ruta en el mapa (pedido del autor, opción a)
+
+### D-034 · Trazado por calles con `computeRoutes` cuando el proveedor es Google
+- **Motivo:** `computeRouteMatrix` solo devuelve distancias y tiempos. Para dibujar el camino real hace falta `computeRoutes` con el trazado (*Encoded Polyline*). SPEC §10.2 prevé "línea recta en offline", es decir, el camino real cuando hay un proveedor que lo calcula.
+- **Implementación:**
+  - `RoutingProvider.trazado(origen, destino)`: el proveedor offline devuelve `null` y el de Google consulta `POST https://routes.googleapis.com/directions/v2:computeRoutes`.
+  - *Field mask* mínimo: `routes.polyline.encodedPolyline,routes.distanceMeters,routes.duration`.
+  - Sin tráfico (`TRAFFIC_UNAWARE`), sin paradas intermedias, `polylineQuality: OVERVIEW` y `polylineEncoding: ENCODED_POLYLINE`.
+  - Verificado en la documentación oficial (28/10/2026). Así el pedido queda en la categoría **Essentials**, y pedir el trazado no cambia de categoría. El cupo gratuito mensual hay que confirmarlo en la lista de precios vigente.
+  - **Un pedido por búsqueda en modo ruta** (origen → destino), con **caché de 7 días** en la tabla nueva `cache_trazado`. El modo ubicación no lo usa.
+  - Si Google falla o no hay ruta por calles, se devuelve `null` y la interfaz dibuja la recta. No afecta la recomendación.
+  - La respuesta de `POST /recomendaciones` agrega `trazado: { puntos: [[lat, lng], …], distanciaKm, duracionMin, fuente } | null`. El decodificador del formato de Google está en `api/src/routing/polyline.ts` y se prueba con el ejemplo oficial.
+  - En el mapa, una leyenda indica si se muestra el recorrido por calles (Google, sin tráfico) o una línea recta (offline).
+- **Impacto en el informe (SPEC §15):** agregar la tabla de infraestructura `cache_trazado` junto a `cache_ruta`, y en el análisis de costos un pedido de *Compute Routes Essentials* por búsqueda en modo ruta (menos lo que resuelva la caché).
+
+### D-035 · Consumo de la Routes API durante la verificación y protección agregada
+- **Qué pasó (28/10/2026):** el autor configuró `GOOGLE_MAPS_API_KEY` en `.env` (con `ROUTING_PROVIDER=auto`). Al reiniciar `npm run dev`, la API pasó a usar Google, y el script de capturas hizo dos búsquedas reales: **25 elementos de `computeRouteMatrix` y 1 pedido de `computeRoutes`**, según el log de la API.
+- Sirvió como prueba de punta a punta con Google: el mapa dibujó el recorrido real Córdoba → Villa Carlos Paz (41,7 km, ~44 min). Las capturas 04, 05, 15 y 16 de esa corrida usan distancias de Google.
+- **Protección:** `npm run capturas -w web` ahora se niega a correr si el `.env` tiene una clave de Google y el proveedor no es `offline`, salvo `CAPTURAS_PERMITIR_GOOGLE=1`.
+- **Para la Fase 6:** `npm run validate` va a usar el proveedor **offline por defecto**, aunque haya clave, y Google solo con una opción explícita. Cientos de escenarios con Google tendrían un costo que hay que decidir a conciencia.
