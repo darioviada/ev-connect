@@ -1,0 +1,83 @@
+.lista {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.fila {
+  display: flex;
+  align-items: center;
+  gap: var(--espacio-4);
+}
+.icono {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  flex: none;
+  border-radius: var(--radio-tarjeta);
+  background: var(--color-primario-claro);
+  color: var(--color-primario);
+}
+.nombre {
+  margin: 0;
+  font-size: 1.15rem;
+}
+.datos {
+  margin: var(--espacio-1) 0 0;
+  color: var(--color-texto-secundario);
+}
+.detalle,
+.formulario {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-4);
+  max-width: 640px;
+}
+.ilustracion {
+  display: grid;
+  place-items: center;
+  height: 180px;
+  border-radius: var(--radio-tarjeta-grande);
+  background: var(--color-primario-claro);
+  color: var(--color-primario);
+}
+.tarjetaModelo {
+  padding: var(--espacio-4) var(--espacio-5);
+  border: 1px solid var(--color-borde-suave);
+  border-radius: var(--radio-tarjeta-grande);
+  background: var(--color-superficie);
+}
+.acciones {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-3);
+  margin-top: var(--espacio-4);
+}
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-2);
+}
+.etiqueta {
+  color: var(--color-texto-secundario);
+  font-size: 0.95rem;
+}
+.placeholder {
+  margin: 0;
+  padding: var(--espacio-4);
+  border: 1px dashed var(--color-borde);
+  border-radius: var(--radio-campo);
+  color: var(--color-texto-atenuado);
+}
+.grilla {
+  display: grid;
+  gap: var(--espacio-4);
+}
+@media (min-width: 640px) {
+  .grilla {
+    grid-template-columns: 1fr 1fr;
+  }
+}

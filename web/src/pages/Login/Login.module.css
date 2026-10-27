@@ -1,0 +1,38 @@
+.pagina {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-5);
+  width: 100%;
+  max-width: 440px;
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: var(--espacio-7) var(--espacio-5);
+}
+.marca {
+  color: var(--color-texto);
+  font-family: var(--fuente-titulos);
+  font-size: 1.8rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+.modoLocal {
+  margin: 0;
+  padding: var(--espacio-2) var(--espacio-3);
+  border-radius: var(--radio-campo);
+  background: var(--color-pendiente-fondo);
+  color: var(--color-pendiente);
+  font-size: 0.85rem;
+}
+.formulario {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-4);
+}
+.demo {
+  margin: 0;
+  color: var(--color-texto-secundario);
+  font-size: 0.85rem;
+}
+.demo code {
+  color: var(--color-texto);
+}

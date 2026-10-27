@@ -1,0 +1,45 @@
+.contenido {
+  margin-top: var(--espacio-5);
+}
+.lista {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.fila {
+  display: flex;
+  align-items: center;
+  gap: var(--espacio-3);
+}
+.enlace {
+  flex: 1;
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+.nombre {
+  display: flex;
+  align-items: center;
+  gap: var(--espacio-2);
+  margin: 0;
+  font-size: 1.15rem;
+}
+.datos {
+  margin: var(--espacio-1) 0 0;
+  color: var(--color-texto-secundario);
+}
+.corazon {
+  border: none;
+  color: var(--color-error);
+}
+.corazon svg {
+  fill: currentColor;
+}
