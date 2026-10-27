@@ -1,5 +1,8 @@
 # EVConnect — servicios locales.
-# Fase 0: solo la base de datos. El servicio de la API (imagen única API + web) se agrega en la Fase 7.
+#   npm run db:up            → solo la base (desarrollo, con `npm run dev`)
+#   docker compose up --build → todo en contenedores: base + app (API que sirve la web) en http://localhost:3000
+# La primera vez la app crea las tablas y carga los datos de demostración; después no los vuelve a sembrar.
+# Puertos configurables (DB_PORT, APP_PORT) por si los predeterminados están ocupados.
 name: ev-connect
 
 services:
@@ -12,7 +15,7 @@ services:
       POSTGRES_DB: tfg
       TZ: America/Argentina/Cordoba
     ports:
-      - '5432:5432'
+      - '${DB_PORT:-5432}:5432'
     volumes:
       - db_data:/var/lib/postgresql/data
     healthcheck:
@@ -23,6 +26,36 @@ services:
       timeout: 5s
       retries: 20
       start_period: 10s
+
+  app:
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+      args:
+        VITE_AUTH_MODE: ${VITE_AUTH_MODE:-local}
+        VITE_COGNITO_REGION: ${VITE_COGNITO_REGION:-}
+        VITE_COGNITO_USER_POOL_ID: ${VITE_COGNITO_USER_POOL_ID:-}
+        VITE_COGNITO_CLIENT_ID: ${VITE_COGNITO_CLIENT_ID:-}
+    # El resto de la configuración sale del .env (modo de autenticación, proveedor de rutas, etc.)
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: postgres://tfg:tfg@db:5432/tfg
+      CORS_ORIGIN: http://localhost:${APP_PORT:-3000}
+      TZ: America/Argentina/Cordoba
+    ports:
+      - '${APP_PORT:-3000}:3000'
+    depends_on:
+      db:
+        condition: service_healthy
+    command:
+      - sh
+      - -c
+      - node dist/src/db/migrate.js && node dist/src/db/seed.js --si-vacia && exec node dist/src/server.js
+    restart: unless-stopped
 
 volumes:
   db_data:

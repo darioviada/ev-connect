@@ -1,0 +1,19 @@
+# Lo que no entra en el contexto de build de la imagen
+**/node_modules
+**/dist
+**/coverage
+.git
+.github
+.vscode
+.idea
+docs
+*.md
+!README.md
+# Secretos: nunca dentro de la imagen
+.env
+.env.*
+!.env.example
+# Herramientas de desarrollo
+web/scripts
+playwright-report
+test-results
