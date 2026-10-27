@@ -1,0 +1,135 @@
+.lista {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.cabeceraTarjeta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--espacio-3);
+}
+.nombre {
+  margin: 0;
+  font-size: 1.15rem;
+}
+.datos {
+  margin: var(--espacio-2) 0 0;
+  color: var(--color-texto-secundario);
+}
+.pie {
+  display: flex;
+  justify-content: space-between;
+  margin: var(--espacio-3) 0 0;
+  color: var(--color-texto-secundario);
+  font-size: 0.85rem;
+}
+.pie strong {
+  color: var(--color-texto);
+  font-family: var(--fuente-titulos);
+}
+
+.resumen {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espacio-2) var(--espacio-4);
+  margin: 0 0 var(--espacio-4);
+  padding: var(--espacio-3) var(--espacio-4);
+  border-radius: var(--radio-campo);
+  background: var(--color-fondo);
+  color: var(--color-texto-secundario);
+  font-size: 0.9rem;
+}
+.resumen strong {
+  color: var(--color-texto);
+}
+.acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espacio-3);
+  margin-bottom: var(--espacio-4);
+}
+.descartados {
+  margin-top: var(--espacio-4);
+  color: var(--color-texto-secundario);
+  font-size: 0.9rem;
+}
+.descartados summary {
+  cursor: pointer;
+}
+.descartados ul {
+  padding-left: var(--espacio-5);
+}
+
+/* Vista de mapa */
+.vistaMapa {
+  position: relative;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+.mapaCompleto {
+  flex: 1;
+  min-height: 45vh;
+}
+.barraFlotante {
+  position: absolute;
+  inset: var(--espacio-4) var(--espacio-4) auto;
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--espacio-3);
+  pointer-events: none;
+}
+.barraFlotante > * {
+  pointer-events: auto;
+}
+.tituloRuta {
+  overflow: hidden;
+  padding: var(--espacio-3) var(--espacio-4);
+  border-radius: var(--radio-boton);
+  background: var(--color-superficie);
+  box-shadow: var(--sombra-tarjeta);
+  font-family: var(--fuente-titulos);
+  font-weight: 600;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.hoja {
+  max-height: 48vh;
+  overflow-y: auto;
+  padding: var(--espacio-3) var(--espacio-4) var(--espacio-6);
+  border-radius: var(--radio-tarjeta-grande) var(--radio-tarjeta-grande) 0 0;
+  background: var(--color-superficie);
+  box-shadow: 0 -4px 16px rgb(0 0 0 / 0.08);
+}
+.asa {
+  width: 48px;
+  height: 5px;
+  margin: 0 auto var(--espacio-3);
+  border-radius: 3px;
+  background: var(--color-borde);
+}
+.conteo {
+  margin: 0 0 var(--espacio-3);
+  color: var(--color-texto-secundario);
+  font-family: var(--fuente-cuerpo);
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+@media (min-width: 1024px) {
+  .vistaMapa {
+    flex-direction: row-reverse;
+    height: calc(100vh - 66px);
+  }
+  .hoja {
+    width: 420px;
+    max-height: none;
+    border-radius: 0;
+  }
+}

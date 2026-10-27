@@ -1,0 +1,346 @@
+/* Componentes base. Tokens en styles/tokens.css. */
+
+/* --- Botones --- */
+.boton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--espacio-2);
+  min-height: 48px;
+  padding: 0 var(--espacio-5);
+  border: 1px solid transparent;
+  border-radius: var(--radio-boton);
+  font-family: var(--fuente-titulos);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  transition:
+    background-color 0.15s,
+    border-color 0.15s;
+}
+.boton:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.primario {
+  background: var(--color-primario);
+  color: var(--color-superficie);
+}
+.primario:hover:not(:disabled) {
+  background: var(--color-primario-hover);
+}
+.secundario {
+  background: var(--color-superficie);
+  border-color: var(--color-borde);
+  color: var(--color-texto);
+}
+.secundario:hover:not(:disabled) {
+  border-color: var(--color-primario);
+}
+.contorno {
+  background: transparent;
+  border-color: var(--color-primario);
+  color: var(--color-primario);
+}
+.peligro {
+  background: var(--color-superficie);
+  border: 1px dashed var(--color-error);
+  color: var(--color-error);
+}
+.texto {
+  background: transparent;
+  color: var(--color-primario);
+  padding: 0 var(--espacio-2);
+  min-height: 40px;
+}
+.anchoCompleto {
+  width: 100%;
+}
+.chico {
+  min-height: 38px;
+  padding: 0 var(--espacio-4);
+  font-size: 0.875rem;
+  border-radius: var(--radio-campo);
+}
+.botonIcono {
+  display: inline-grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  flex: none;
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-campo);
+  background: var(--color-superficie);
+  color: var(--color-texto);
+  cursor: pointer;
+}
+.botonIcono:hover {
+  border-color: var(--color-primario);
+}
+.botonIconoSuave {
+  border-color: transparent;
+  background: var(--color-fondo);
+}
+
+/* --- Campos --- */
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-2);
+}
+.etiqueta {
+  color: var(--color-texto-secundario);
+  font-size: 0.95rem;
+}
+.control {
+  width: 100%;
+  min-height: 52px;
+  padding: 0 var(--espacio-4);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-campo);
+  background: var(--color-superficie);
+  color: var(--color-texto);
+  font: inherit;
+  font-size: 1rem;
+}
+.control::placeholder {
+  color: var(--color-texto-atenuado);
+}
+.control[aria-invalid='true'] {
+  border-color: var(--color-error);
+}
+.ayuda {
+  margin: 0;
+  color: var(--color-texto-secundario);
+  font-size: 0.85rem;
+}
+.errorCampo {
+  margin: 0;
+  color: var(--color-error);
+  font-size: 0.85rem;
+}
+
+/* --- Segmentado (Ubicación/Ruta, pestañas) --- */
+.segmentado {
+  display: grid;
+  grid-auto-columns: 1fr;
+  grid-auto-flow: column;
+  gap: var(--espacio-3);
+}
+.segmento {
+  min-height: 48px;
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-boton);
+  background: var(--color-superficie);
+  color: var(--color-texto);
+  font-family: var(--fuente-titulos);
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+}
+.segmento[aria-pressed='true'],
+.segmento[aria-selected='true'] {
+  background: var(--color-primario);
+  border-color: var(--color-primario);
+  color: var(--color-superficie);
+}
+/* Variante pestañas (fondo gris, seleccionado blanco) */
+.pestanas {
+  padding: var(--espacio-1);
+  gap: var(--espacio-1);
+  border-radius: var(--radio-tarjeta);
+  background: var(--color-fondo);
+}
+.pestanas .segmento {
+  border: none;
+  background: transparent;
+  color: var(--color-texto-secundario);
+}
+.pestanas .segmento[aria-selected='true'] {
+  background: var(--color-superficie);
+  color: var(--color-texto);
+  box-shadow: 0 1px 3px rgb(27 29 26 / 0.12);
+}
+
+/* --- Tarjetas e insignias --- */
+.tarjeta {
+  display: block;
+  width: 100%;
+  padding: var(--espacio-5);
+  border: 1px solid var(--color-borde-suave);
+  border-radius: var(--radio-tarjeta-grande);
+  background: var(--color-superficie);
+  color: inherit;
+  text-align: left;
+  text-decoration: none;
+}
+a.tarjeta:hover,
+button.tarjeta:hover {
+  border-color: var(--color-primario);
+}
+.tarjetaDestacada {
+  border-color: var(--color-primario);
+  background: var(--color-primario-claro);
+}
+.tarjetaSuave {
+  border-color: transparent;
+  background: var(--color-fondo);
+}
+.insignia {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-family: var(--fuente-titulos);
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.insigniaPrimario {
+  background: var(--color-primario);
+  color: var(--color-superficie);
+}
+.insigniaExito {
+  background: var(--color-primario-claro);
+  color: var(--color-primario);
+}
+.insigniaPendiente {
+  background: var(--color-pendiente-fondo);
+  color: var(--color-pendiente);
+}
+.insigniaAtenuado {
+  background: var(--color-fondo);
+  color: var(--color-texto-atenuado);
+}
+.insigniaError {
+  background: var(--color-error-fondo);
+  color: var(--color-error);
+}
+
+/* --- Cabecera de página --- */
+.cabecera {
+  display: flex;
+  align-items: center;
+  gap: var(--espacio-3);
+  margin-bottom: var(--espacio-5);
+}
+.cabeceraTextos {
+  flex: 1;
+  min-width: 0;
+}
+.cabeceraTitulo {
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+.cabeceraSubtitulo {
+  margin: var(--espacio-1) 0 0;
+  color: var(--color-texto-secundario);
+}
+.volver {
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin-left: calc(-1 * var(--espacio-2));
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--color-texto);
+  cursor: pointer;
+}
+
+/* --- Estados --- */
+.estado {
+  padding: var(--espacio-6) var(--espacio-4);
+  text-align: center;
+  color: var(--color-texto-secundario);
+}
+.estadoTitulo {
+  margin: var(--espacio-3) 0 var(--espacio-2);
+  color: var(--color-texto);
+  font-size: 1.15rem;
+}
+.alerta {
+  display: flex;
+  gap: var(--espacio-3);
+  align-items: flex-start;
+  padding: var(--espacio-3) var(--espacio-4);
+  border-radius: var(--radio-campo);
+  font-size: 0.95rem;
+}
+.alertaError {
+  background: var(--color-error-fondo);
+  color: var(--color-error);
+}
+.alertaAviso {
+  background: var(--color-pendiente-fondo);
+  color: var(--color-pendiente);
+}
+.alertaExito {
+  background: var(--color-primario-claro);
+  color: var(--color-primario);
+}
+.alerta p {
+  margin: 0;
+}
+.girando {
+  width: 28px;
+  height: 28px;
+  border: 3px solid var(--color-borde);
+  border-top-color: var(--color-primario);
+  border-radius: 50%;
+  animation: girar 0.8s linear infinite;
+  margin: 0 auto;
+}
+@keyframes girar {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* --- Chips de datos (batería, autonomía, conector) --- */
+.chips {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--espacio-3);
+}
+.chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: var(--espacio-4) var(--espacio-2);
+  border-radius: var(--radio-tarjeta);
+  background: var(--color-fondo);
+  text-align: center;
+}
+.chip svg {
+  color: var(--color-primario);
+}
+.chipValor {
+  font-family: var(--fuente-titulos);
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+.chipNombre {
+  color: var(--color-texto-secundario);
+  font-size: 0.85rem;
+}
+
+.soloLectores {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+@media (min-width: 1024px) {
+  .cabeceraTitulo {
+    font-size: 1.75rem;
+  }
+}
