@@ -185,3 +185,9 @@ Ordenar por avance de **menor a mayor** vuelve a priorizar los cargadores cercan
 - Si algún tramo queda vacío, completar con los más cercanos a la línea.
 
 Así los 8 candidatos quedan **repartidos a lo largo del recorrido** y el motor elige entre ellos por desvío, espera, carga y costo.
+
+### D-026 · Normalización con rango mínimo por criterio (desvío del SPEC §6.5, aprobado por el autor)
+- **Problema observado:** al correr el motor con el seed (Centro de Córdoba, e-208 al 15 %, urgencia alta), la min–max clásica del SPEC recomendaba un cargador AC de 11 kW con **294 minutos** de carga por encima de uno DC de 50 kW con 44 minutos. La única ventaja del primero era estar **100 m más cerca** (1.0 km contra 1.1 km). La min–max lleva cualquier diferencia, por chica que sea, a la escala completa de 0 a 1, y la distancia pesa 45 % con urgencia alta.
+- **Decisión:** `norm = (x − min) / max(max − min, rangoMínimo)`. Los rangos mínimos son configurables en `engine/config.ts`: **distancia 3 km, espera 15 min, carga 30 min y costo $ 2000**. Si la diferencia real supera el umbral, el resultado es idéntico a la min–max del SPEC. Si no la supera, pesa en proporción (100 m / 3 km ≈ 0.03).
+- **Efecto con el seed:** con urgencia alta pasa a ganar el cargador DC de 44 minutos (88.6 contra 80 puntos). Con urgencia media sigue ganando el AC lento y barato, por poco (75.1 contra 73.2), porque costo y carga pesan lo mismo y la diferencia de costo es grande. Con urgencia baja no cambia el ganador.
+- **Impacto en el informe:** describir la normalización con rango mínimo en la sección del motor y justificar los umbrales. Son valores de diseño, no calibrados con usuarios reales: una línea de trabajo futuro es ajustarlos con datos. Los tests incluyen el caso observado, con y sin rango mínimo.
