@@ -1,4 +1,6 @@
 // Construye la aplicación Express sin abrir puertos (así se puede testear con supertest).
+import { existsSync } from 'node:fs';
+import path from 'node:path';
 import cors from 'cors';
 import express, { type Express } from 'express';
 import helmet from 'helmet';
@@ -39,7 +41,32 @@ export function createApp(deps: DependenciasApi): Express {
       autoLogging: { ignore: (req) => req.url === `${API_PREFIX}/salud` },
     }),
   );
-  app.use(helmet());
+  // Detrás del balanceador, la IP real del cliente (para el límite de solicitudes) viene en X-Forwarded-For.
+  if (config.trustProxy > 0) app.set('trust proxy', config.trustProxy);
+
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          scriptSrc: ["'self'"],
+          // Leaflet y React aplican estilos en línea
+          styleSrc: ["'self'", "'unsafe-inline'"],
+          // Mosaicos de OpenStreetMap (con su atribución visible en el mapa)
+          imgSrc: ["'self'", 'data:', 'https://tile.openstreetmap.org'],
+          fontSrc: ["'self'", 'data:'],
+          // Amazon Cognito (modo cognito: Amplify habla directo con el User Pool)
+          connectSrc: ["'self'", 'https://*.amazonaws.com'],
+          objectSrc: ["'none'"],
+          frameAncestors: ["'none'"],
+          baseUri: ["'self'"],
+          formAction: ["'self'"],
+          // La demo local corre por http://localhost: no forzar https (en la nube lo resuelve el balanceador)
+          upgradeInsecureRequests: null,
+        },
+      },
+    }),
+  );
   app.use(cors({ origin: config.corsOrigins }));
   app.use(express.json({ limit: '100kb' }));
 
@@ -57,6 +84,27 @@ export function createApp(deps: DependenciasApi): Express {
   api.use(geocodificacionRouter(deps));
   api.use(adminUsuariosRouter(deps));
   app.use(API_PREFIX, api);
+
+  // Producción: la misma imagen sirve el build de la web (un solo artefacto, ver docs/AWS_DEPLOY.md).
+  // Cualquier GET que no sea de la API devuelve index.html (el ruteo lo resuelve React Router).
+  if (config.webDist && existsSync(path.join(config.webDist, 'index.html'))) {
+    const indice = path.resolve(config.webDist, 'index.html');
+    app.use(
+      express.static(config.webDist, {
+        index: false,
+        setHeaders: (res, archivo) => {
+          // Los archivos de /assets llevan un hash en el nombre: se pueden cachear mucho tiempo
+          if (archivo.includes(`${path.sep}assets${path.sep}`)) {
+            res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+          }
+        },
+      }),
+    );
+    app.use((req, res, next) => {
+      if (req.method !== 'GET' || req.path.startsWith('/api/')) return next();
+      res.sendFile(indice);
+    });
+  }
 
   app.use(noEncontrado);
   app.use(manejadorErrores(logger));

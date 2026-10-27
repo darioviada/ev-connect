@@ -1,6 +1,9 @@
+import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
 import request from 'supertest';
 import { describe, expect, it } from 'vitest';
-import { appDePrueba } from './helpers.js';
+import { appDePrueba, configDePrueba } from './helpers.js';
 
 const app = appDePrueba();
 
@@ -56,5 +59,44 @@ describe('CORS', () => {
 
     const ajeno = await request(app).get('/api/v1/salud').set('Origin', 'http://malicioso.test');
     expect(ajeno.headers['access-control-allow-origin']).toBeUndefined();
+  });
+});
+
+describe('la API sirve el build de la web (contenedor de producción)', () => {
+  const carpeta = mkdtempSync(path.join(tmpdir(), 'web-dist-'));
+  mkdirSync(path.join(carpeta, 'assets'));
+  writeFileSync(path.join(carpeta, 'index.html'), '<!doctype html><title>EVConnect</title>');
+  writeFileSync(path.join(carpeta, 'assets', 'app-123.js'), 'console.log(1)');
+  const appWeb = appDePrueba({ config: configDePrueba({ WEB_DIST: carpeta, TRUST_PROXY: '1' }) });
+
+  it('sirve los archivos estáticos con caché larga para /assets', async () => {
+    const res = await request(appWeb).get('/assets/app-123.js');
+    expect(res.status).toBe(200);
+    expect(res.headers['cache-control']).toContain('immutable');
+  });
+
+  it('las rutas de la SPA devuelven index.html', async () => {
+    for (const ruta of ['/', '/resultados', '/cargadores/abc']) {
+      const res = await request(appWeb).get(ruta);
+      expect(res.status, ruta).toBe(200);
+      expect(res.text).toContain('EVConnect');
+    }
+  });
+
+  it('las rutas de la API inexistentes siguen respondiendo 404 en JSON', async () => {
+    const res = await request(appWeb).get('/api/v1/no-existe');
+    expect(res.status).toBe(404);
+    expect(res.body.error.code).toBe('NO_ENCONTRADO');
+  });
+
+  it('la CSP permite los mosaicos de OpenStreetMap y no fuerza https en local', async () => {
+    const csp = (await request(appWeb).get('/')).headers['content-security-policy'];
+    expect(csp).toContain('img-src');
+    expect(csp).toContain('https://tile.openstreetmap.org');
+    expect(csp).not.toContain('upgrade-insecure-requests');
+  });
+
+  it('sin WEB_DIST no sirve archivos (modo desarrollo)', async () => {
+    expect((await request(appDePrueba()).get('/')).status).toBe(404);
   });
 });

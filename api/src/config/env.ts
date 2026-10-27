@@ -41,6 +41,10 @@ const esquema = z
     CANDIDATES_LIMIT: z.coerce.number().int().min(1).max(25).default(8),
     SEARCH_RADIUS_KM: z.coerce.number().positive().default(20),
     CORRIDOR_KM: z.coerce.number().positive().default(5),
+    /** Cantidad de proxies confiables delante de la API (1 detrás del Application Load Balancer). */
+    TRUST_PROXY: z.coerce.number().int().min(0).max(5).default(0),
+    /** Carpeta con el build de la web para servirla desde la API (contenedor de producción). */
+    WEB_DIST: z.string().optional(),
   })
   .superRefine((env, ctx) => {
     const problema = (path: string, message: string) =>
@@ -84,6 +88,8 @@ export interface Config {
   routing: { provider: 'offline' | 'google'; googleApiKey?: string };
   geocoding: { provider: 'static' | 'nominatim' };
   engine: { candidatesLimit: number; searchRadiusKm: number; corridorKm: number };
+  trustProxy: number;
+  webDist: string | null;
   /** Avisos no fatales para mostrar al arrancar. */
   advertencias: string[];
 }
@@ -145,6 +151,8 @@ export function parseConfig(entorno: Record<string, string | undefined>): Config
       searchRadiusKm: env.SEARCH_RADIUS_KM,
       corridorKm: env.CORRIDOR_KM,
     },
+    trustProxy: env.TRUST_PROXY,
+    webDist: env.WEB_DIST ?? null,
     advertencias,
   };
 }
