@@ -1,6 +1,8 @@
 // POST /recomendaciones de punta a punta con el seed (preselección espacial + proveedor offline + motor).
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { uuidDeterministico } from '../../seeds/aleatorio.js';
+import { OfflineProvider } from '../../src/routing/index.js';
+import { appDePrueba } from '../helpers.js';
 import { cliente, prepararContextoApi, tokenSeed, type ContextoApi } from './contexto.js';
 
 let ctx: ContextoApi;
@@ -184,6 +186,57 @@ describe('modo ruta (Córdoba → Villa Carlos Paz)', () => {
     const evaluados = [...r.recomendaciones.map((x: { cargador: unknown }) => x.cargador)];
     const lngs = evaluados.map((c: { ubicacion: { lng: number } }) => c.ubicacion.lng);
     expect(Math.min(...lngs)).toBeLessThan(-64.3);
+  });
+
+  it('con el proveedor offline no hay trazado (la interfaz dibuja una recta)', async () => {
+    const res = await buscar({
+      vehiculo: modelo('peugeot-e208'),
+      bateriaPct: 50,
+      modo: 'ruta',
+      origen: CENTRO,
+      destino: CARLOS_PAZ,
+    });
+    expect(res.body.trazado).toBeNull();
+  });
+
+  it('si el proveedor calcula el trazado, la respuesta incluye los puntos del camino', async () => {
+    class ConTrazado extends OfflineProvider {
+      override async trazado() {
+        return {
+          puntos: [CENTRO, { lat: -31.43123456, lng: -64.3 }, CARLOS_PAZ],
+          distanciaM: 36_540,
+          duracionS: 2_430,
+          fuente: 'google' as const,
+        };
+      }
+    }
+    const app = appDePrueba({ db: ctx.db, rutas: new ConTrazado() });
+    const res = await cliente(app).post('/recomendaciones', {
+      vehiculo: modelo('peugeot-e208'),
+      bateriaPct: 50,
+      modo: 'ruta',
+      origen: CENTRO,
+      destino: CARLOS_PAZ,
+    });
+    expect(res.body.trazado).toEqual({
+      puntos: [
+        [CENTRO.lat, CENTRO.lng],
+        [-31.43123, -64.3],
+        [CARLOS_PAZ.lat, CARLOS_PAZ.lng],
+      ],
+      distanciaKm: 36.5,
+      duracionMin: 41,
+      fuente: 'google',
+    });
+
+    // En modo ubicación no se pide trazado
+    const ubicacion = await cliente(app).post('/recomendaciones', {
+      vehiculo: modelo('peugeot-e208'),
+      bateriaPct: 50,
+      modo: 'ubicacion',
+      origen: CENTRO,
+    });
+    expect(ubicacion.body.trazado).toBeNull();
   });
 
   it('valida el destino', async () => {
