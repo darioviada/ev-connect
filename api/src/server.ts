@@ -1,6 +1,8 @@
 // Punto de entrada: carga la configuración, arma la app y escucha en PORT.
 import { createApp } from './app.js';
+import { crearAuthProvider } from './auth/index.js';
 import { cargarConfig, ConfigError, type Config } from './config/index.js';
+import { crearKnex } from './db/knex.js';
 import { crearLogger } from './logger.js';
 
 let config: Config;
@@ -17,7 +19,9 @@ try {
 const logger = crearLogger(config);
 for (const advertencia of config.advertencias) logger.warn(advertencia);
 
-const app = createApp({ config, logger });
+const db = crearKnex(config.databaseUrl, config.tz);
+const auth = crearAuthProvider(config);
+const app = createApp({ config, logger, db, auth });
 
 const server = app.listen(config.port, (error?: Error) => {
   if (error) {
@@ -31,7 +35,9 @@ const server = app.listen(config.port, (error?: Error) => {
 
 function apagar(senal: string) {
   logger.info(`${senal} recibido: cerrando la API…`);
-  server.close(() => process.exit(0));
+  server.close(() => {
+    db.destroy().finally(() => process.exit(0));
+  });
   setTimeout(() => process.exit(1), 10_000).unref();
 }
 process.on('SIGTERM', () => apagar('SIGTERM'));
