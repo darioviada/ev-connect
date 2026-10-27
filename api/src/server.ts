@@ -5,7 +5,7 @@ import { cargarConfig, ConfigError, type Config } from './config/index.js';
 import { crearKnex } from './db/knex.js';
 import { crearLogger } from './logger.js';
 import { crearGeocodingProvider } from './routing/geocodificacion/index.js';
-import { CacheRutasPg, crearRoutingProvider } from './routing/index.js';
+import { CacheRutasPg, CacheTrazadosPg, crearRoutingProvider } from './routing/index.js';
 
 let config: Config;
 try {
@@ -27,7 +27,11 @@ const app = createApp({
   logger,
   db,
   auth: crearAuthProvider(config),
-  rutas: crearRoutingProvider(config, { cache: new CacheRutasPg(db), logger }),
+  rutas: crearRoutingProvider(config, {
+    cache: new CacheRutasPg(db),
+    cacheTrazados: new CacheTrazadosPg(db),
+    logger,
+  }),
   geocoding: crearGeocodingProvider(config),
   reloj: { ahora: () => new Date(), zonaHoraria: config.tz },
 });

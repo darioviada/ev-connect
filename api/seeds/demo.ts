@@ -32,6 +32,7 @@ const TABLAS_DE_DATOS = [
   'favorito',
   'ruta_guardada',
   'cache_ruta',
+  'cache_trazado',
 ];
 
 export async function sembrar(db: Knex, opciones: OpcionesSembrar): Promise<ResumenSeed> {

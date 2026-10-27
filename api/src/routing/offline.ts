@@ -1,6 +1,6 @@
 // OfflineProvider (modo demo, sin servicios externos): distancia = Haversine × 1.35 (factor de circuito,
 // para aproximar el recorrido por calles) y velocidad media según la distancia. No considera tráfico.
-import type { Celda, LatLng, ResultadoMatriz, RoutingProvider } from './tipos.js';
+import type { Celda, LatLng, ResultadoMatriz, RoutingProvider, Trazado } from './tipos.js';
 
 const RADIO_TIERRA_M = 6_371_000;
 export const FACTOR_CIRCUITO = 1.35;
@@ -43,5 +43,10 @@ export class OfflineProvider implements RoutingProvider {
       elementosDesdeCache: 0,
       advertencias: [],
     };
+  }
+
+  /** Sin servicio externo no hay trazado por calles: la interfaz dibuja una línea recta. */
+  async trazado(): Promise<Trazado | null> {
+    return null;
   }
 }

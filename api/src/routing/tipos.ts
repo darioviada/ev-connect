@@ -24,7 +24,20 @@ export interface ResultadoMatriz {
   advertencias: string[];
 }
 
+/** Camino real por calles entre dos puntos (para dibujarlo en el mapa). */
+export interface Trazado {
+  puntos: LatLng[];
+  distanciaM: number;
+  duracionS: number;
+  fuente: 'google' | 'google-cache';
+}
+
 export interface RoutingProvider {
   readonly nombre: 'offline' | 'google';
   matrix(origenes: readonly LatLng[], destinos: readonly LatLng[]): Promise<ResultadoMatriz>;
+  /**
+   * Trazado origen → destino, o null si el proveedor no lo calcula (offline) o si falló.
+   * Sin trazado, la interfaz dibuja una línea recta.
+   */
+  trazado(origen: LatLng, destino: LatLng): Promise<Trazado | null>;
 }

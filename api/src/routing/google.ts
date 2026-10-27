@@ -1,4 +1,4 @@
-// GoogleRoutesProvider — Routes API v2, método computeRouteMatrix.
+// GoogleRoutesProvider — Routes API v2: computeRouteMatrix (distancias y tiempos) y computeRoutes (trazado).
 // Verificado en la documentación oficial (2026-10-27):
 //   POST https://routes.googleapis.com/distanceMatrix/v2:computeRouteMatrix
 //   Encabezados: X-Goog-Api-Key, X-Goog-FieldMask; respuesta: arreglo JSON de elementos
@@ -9,14 +9,29 @@
 //   - caché de 7 días en cache_ruta; solo se piden los pares que no están en caché;
 //   - se cuentan y loguean los elementos consultados.
 // Si la API falla, se cae al OfflineProvider para los pares faltantes y se avisa en `advertencias`.
+//
+// Trazado para el mapa (verificado el 2026-10-28): POST https://routes.googleapis.com/directions/v2:computeRoutes
+// con field mask routes.polyline.encodedPolyline,routes.distanceMeters,routes.duration. Sin tráfico
+// (TRAFFIC_UNAWARE) ni paradas intermedias queda en la categoría Essentials. Un pedido por búsqueda en modo
+// ruta, con caché de 7 días en cache_trazado. Si falla, se devuelve null y la interfaz dibuja una recta.
 import type { Logger } from 'pino';
-import { claveRuta, type CacheRutas, type EntradaCache } from './cache.js';
+import {
+  claveRuta,
+  type CacheRutas,
+  type CacheTrazados,
+  type EntradaCache,
+  type EntradaTrazado,
+} from './cache.js';
 import { estimarCelda } from './offline.js';
-import type { Celda, LatLng, ResultadoMatriz, RoutingProvider } from './tipos.js';
+import { decodificarPolyline } from './polyline.js';
+import type { Celda, LatLng, ResultadoMatriz, RoutingProvider, Trazado } from './tipos.js';
 
 export const URL_ROUTE_MATRIX =
   'https://routes.googleapis.com/distanceMatrix/v2:computeRouteMatrix';
 export const FIELD_MASK = 'originIndex,destinationIndex,duration,distanceMeters,status,condition';
+export const URL_COMPUTE_ROUTES = 'https://routes.googleapis.com/directions/v2:computeRoutes';
+export const FIELD_MASK_TRAZADO =
+  'routes.polyline.encodedPolyline,routes.distanceMeters,routes.duration';
 /** Límite de elementos por pedido para rutas que no son de transporte público. */
 const MAX_ELEMENTOS = 625;
 
@@ -35,6 +50,8 @@ interface ElementoRespuesta {
 export interface OpcionesGoogle {
   apiKey: string;
   cache: CacheRutas;
+  /** Sin caché de trazados, cada búsqueda en modo ruta consulta computeRoutes. */
+  cacheTrazados?: CacheTrazados;
   fetch?: typeof fetch;
   logger?: Pick<Logger, 'info' | 'warn'>;
   timeoutMs?: number;
@@ -46,7 +63,8 @@ const waypoint = (p: LatLng) => ({
 
 export class GoogleRoutesProvider implements RoutingProvider {
   readonly nombre = 'google' as const;
-  readonly #o: Required<Omit<OpcionesGoogle, 'logger'>> & Pick<OpcionesGoogle, 'logger'>;
+  readonly #o: Required<Omit<OpcionesGoogle, 'logger' | 'cacheTrazados'>> &
+    Pick<OpcionesGoogle, 'logger' | 'cacheTrazados'>;
 
   constructor(opciones: OpcionesGoogle) {
     this.#o = { fetch: globalThis.fetch, timeoutMs: 8000, ...opciones };
@@ -126,6 +144,66 @@ export class GoogleRoutesProvider implements RoutingProvider {
     }
 
     return { celdas: completas, elementosConsultados, elementosDesdeCache, advertencias };
+  }
+
+  async trazado(origen: LatLng, destino: LatLng): Promise<Trazado | null> {
+    const clave = claveRuta(origen, destino);
+    const aTrazado = (e: EntradaTrazado, fuente: Trazado['fuente']): Trazado => ({
+      puntos: decodificarPolyline(e.polyline),
+      distanciaM: e.distanciaM,
+      duracionS: e.duracionS,
+      fuente,
+    });
+
+    try {
+      const enCache = await this.#o.cacheTrazados?.obtener(clave);
+      if (enCache) return aTrazado(enCache, 'google-cache');
+
+      const respuesta = await this.#o.fetch(URL_COMPUTE_ROUTES, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Goog-Api-Key': this.#o.apiKey,
+          'X-Goog-FieldMask': FIELD_MASK_TRAZADO,
+        },
+        body: JSON.stringify({
+          origin: { location: { latLng: { latitude: origen.lat, longitude: origen.lng } } },
+          destination: { location: { latLng: { latitude: destino.lat, longitude: destino.lng } } },
+          travelMode: 'DRIVE',
+          routingPreference: 'TRAFFIC_UNAWARE',
+          polylineQuality: 'OVERVIEW',
+          polylineEncoding: 'ENCODED_POLYLINE',
+        }),
+        signal: AbortSignal.timeout(this.#o.timeoutMs),
+      });
+      if (!respuesta.ok) {
+        throw new Error(`Routes API (computeRoutes) respondió ${respuesta.status}`);
+      }
+      const cuerpo = (await respuesta.json()) as {
+        routes?: {
+          polyline?: { encodedPolyline?: string };
+          distanceMeters?: number;
+          duration?: string;
+        }[];
+      };
+      const ruta = cuerpo.routes?.[0];
+      if (!ruta?.polyline?.encodedPolyline) return null; // sin ruta por calles entre esos puntos
+
+      const entrada: EntradaTrazado = {
+        polyline: ruta.polyline.encodedPolyline,
+        distanciaM: ruta.distanceMeters ?? 0,
+        duracionS: Number.parseFloat(ruta.duration ?? '0'),
+      };
+      await this.#o.cacheTrazados?.guardar(clave, entrada);
+      this.#o.logger?.info({ trazado: 1 }, 'Routes API: trazado consultado');
+      return aTrazado(entrada, 'google');
+    } catch (error) {
+      this.#o.logger?.warn(
+        { err: error },
+        'No se pudo obtener el trazado: se dibuja una línea recta',
+      );
+      return null;
+    }
   }
 
   async #pedir(origenes: LatLng[], destinos: LatLng[]): Promise<ElementoRespuesta[]> {

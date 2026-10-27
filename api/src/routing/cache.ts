@@ -73,3 +73,59 @@ export class CacheRutasMemoria implements CacheRutas {
     for (const [c, e] of entradas) this.datos.set(c, e);
   }
 }
+
+// --- Caché de trazados (computeRoutes) -------------------------------------------------------
+
+export interface EntradaTrazado {
+  polyline: string;
+  distanciaM: number;
+  duracionS: number;
+}
+
+export interface CacheTrazados {
+  obtener(clave: string): Promise<EntradaTrazado | undefined>;
+  guardar(clave: string, entrada: EntradaTrazado): Promise<void>;
+}
+
+export class CacheTrazadosPg implements CacheTrazados {
+  readonly #db: Knex;
+  readonly #ttlDias: number;
+
+  constructor(db: Knex, ttlDias = TTL_CACHE_DIAS) {
+    this.#db = db;
+    this.#ttlDias = ttlDias;
+  }
+
+  async obtener(clave: string): Promise<EntradaTrazado | undefined> {
+    const fila = await this.#db('cache_trazado')
+      .where('clave', clave)
+      .andWhereRaw('creado > now() - make_interval(days => ?)', [this.#ttlDias])
+      .first('polyline', 'distancia_m', 'duracion_s');
+    return fila
+      ? { polyline: fila.polyline, distanciaM: fila.distancia_m, duracionS: fila.duracion_s }
+      : undefined;
+  }
+
+  async guardar(clave: string, e: EntradaTrazado): Promise<void> {
+    await this.#db('cache_trazado')
+      .insert({
+        clave,
+        polyline: e.polyline,
+        distancia_m: Math.round(e.distanciaM),
+        duracion_s: Math.round(e.duracionS),
+        creado: this.#db.fn.now(),
+      })
+      .onConflict('clave')
+      .merge();
+  }
+}
+
+export class CacheTrazadosMemoria implements CacheTrazados {
+  readonly datos = new Map<string, EntradaTrazado>();
+  async obtener(clave: string) {
+    return this.datos.get(clave);
+  }
+  async guardar(clave: string, e: EntradaTrazado) {
+    this.datos.set(clave, e);
+  }
+}
