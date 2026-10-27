@@ -279,3 +279,33 @@ El resto de los tokens no cambia. Están en `web/src/styles/tokens.css`.
 - Sirvió como prueba de punta a punta con Google: el mapa dibujó el recorrido real Córdoba → Villa Carlos Paz (41,7 km, ~44 min). Las capturas 04, 05, 15 y 16 de esa corrida usan distancias de Google.
 - **Protección:** `npm run capturas -w web` ahora se niega a correr si el `.env` tiene una clave de Google y el proveedor no es `offline`, salvo `CAPTURAS_PERMITIR_GOOGLE=1`.
 - **Para la Fase 6:** `npm run validate` va a usar el proveedor **offline por defecto**, aunque haya clave, y Google solo con una opción explícita. Cientos de escenarios con Google tendrían un costo que hay que decidir a conciencia.
+
+## 2026-10-28 — Fase 6
+
+### D-036 · Diseño de `npm run validate`
+- **Mismo camino que la API:** la lógica de `POST /recomendaciones` se extrajo a `api/src/modules/recomendaciones/servicio.ts`, que usan la API y la validación.
+- **Base propia y reproducible:** `<base>_validacion`, sembrada con fecha fija (`FECHA_BASE` = 02/11/2026). Los escenarios caen en esa semana, así que el resultado no depende del día en que se corra. Se verificó que dos corridas con la misma semilla producen archivos idénticos.
+- **Proveedor offline por defecto** (D-035). Con `--proveedor google` exige además `--confirmar-costo`.
+- **Línea base:** entre **todos** los cargadores activos, el factible (compatible, alcanzable y disponible) más cercano. En modo ruta, el de **menor desvío**. Se le supone información perfecta, un supuesto favorable a la base.
+- **Grado de optimalidad:** resuelve la duda 6 de la primera ronda. Se calcula como score(sistema) / score(óptimo), con **ambos puntajes en el conjunto completo** (fuerza bruta), porque los puntajes min–max de conjuntos distintos no son comparables. Mide la pérdida por la preselección.
+- **Métrica de cercanía:** el informe agrega la cercanía (distancia en modo ubicación, desvío en modo ruta), que es el criterio de la base. La primera versión promediaba la "distancia al cargador" de los dos modos y mostraba una mejora del 15 % que era un efecto de la mezcla: en modo ruta la base minimiza el desvío, no la distancia al origen. Se verificó que el sistema nunca supera a la base en cercanía (0 de 145 casos en ubicación y 0 de 40 en ruta), como corresponde por definición.
+- **Valores absolutos:** las tablas por grupo los muestran junto a los porcentajes, porque con promedios chicos (desvíos menores a 1 km) el porcentaje exagera.
+
+### D-037 · Sensibilidad de los resultados a la semilla (200 escenarios cada una, proveedor offline)
+Valores tal como los imprime `npm run validate` (mejora = (base − sistema) / base; negativo = el sistema es peor):
+
+| Semilla | Comparables | Cercanía | Tiempo total | Costo | Elige distinto que la base | Optimalidad prom. | Sin solución por preselección |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| 42 (oficial) | 185 | −12,1 % | +9,1 % | +0,6 % | 34,6 % | 97,9 % | 1 |
+| 1 | 187 | −7,6 % | +10,0 % | −1,9 % | 29,9 % | 97,8 % | 3 |
+| 7 | 184 | −9,9 % | +6,3 % | −0,9 % | 31,0 % | 98,2 % | 2 |
+| 2026 | 190 | −6,2 % | +11,1 % | −2,2 % | 32,1 % | 97,9 % | 1 |
+| 99 | 186 | −9,9 % | +4,4 % | +3,0 % | 34,9 % | 97,9 % | 2 |
+
+**Lectura:**
+- **Tiempo total:** la mejora es consistente (entre +4 % y +11 %).
+- **Cercanía:** siempre se cede algo (entre 6 % y 12 %), como corresponde por definición.
+- **Costo:** **en el total no hay una mejora consistente** (entre −2,2 % y +3,0 %). La mejora en costo aparece solo con urgencia baja, donde el costo pesa 50 %; con urgencia alta el costo empeora.
+- **Optimalidad:** se mantiene cerca del 98 %.
+
+Hay que informar estos resultados tal como salen, con la semilla y la cantidad de escenarios.
