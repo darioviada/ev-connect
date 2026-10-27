@@ -21,13 +21,17 @@ export default defineConfig([
     },
   },
   {
-    files: ['api/**/*.ts', '*.js'],
+    files: ['api/**/*.ts', '*.js', 'web/scripts/**/*.mjs'],
     languageOptions: { globals: globals.node },
   },
   {
     files: ['web/**/*.{ts,tsx}'],
     extends: [reactHooks.configs.flat.recommended, reactRefresh.configs.vite],
     languageOptions: { globals: globals.browser },
+    rules: {
+      // claseControl es un nombre de clase CSS compartido por los formularios
+      'react-refresh/only-export-components': ['error', { allowExportNames: ['claseControl'] }],
+    },
   },
   prettier,
 ]);
