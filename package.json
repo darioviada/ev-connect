@@ -21,7 +21,8 @@
     "lint": "eslint . && prettier --check . && npm run typecheck --workspaces",
     "format": "prettier --write .",
     "build": "npm run build -w web && npm run build -w api",
-    "start": "npm run start -w api"
+    "start": "npm run start -w api",
+    "validate": "npm run validate -w api --"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

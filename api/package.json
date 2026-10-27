@@ -12,7 +12,8 @@
     "test:watch": "vitest",
     "db:migrate": "tsx src/db/migrate.ts",
     "db:seed": "tsx src/db/seed.ts",
-    "test:coverage": "vitest run --coverage.enabled --coverage.include=src/engine/** --coverage.include=src/routing/** --coverage.reporter=text"
+    "test:coverage": "vitest run --coverage.enabled --coverage.include=src/engine/** --coverage.include=src/routing/** --coverage.reporter=text",
+    "validate": "tsx scripts/validate.ts"
   },
   "dependencies": {
     "aws-jwt-verify": "^5.2.1",
