@@ -1,10 +1,16 @@
 // Parámetros del motor en un único lugar (SPEC §6). Cambiar los pesos acá cambia el comportamiento de
 // toda la aplicación y de `npm run validate`.
-import type { Pesos, Urgencia } from './tipos.js';
+import type { Criterio, Pesos, Urgencia } from './tipos.js';
 
 export interface ConfigMotor {
   /** Pesos por urgencia. Cada fila suma 1. */
   pesos: Record<Urgencia, Pesos>;
+  /**
+   * Rango mínimo de normalización por criterio (desvío del SPEC, ver docs/DECISIONES.md D-026).
+   * Diferencias menores que este umbral pesan proporcionalmente poco: 100 m de distancia no deben
+   * decidir frente a horas de carga. Unidades: km, min, min y ARS.
+   */
+  rangosMinimos: Record<Criterio, number>;
   /** Se exige autonomía × margen ≥ distancia (margen de seguridad del 10 %). */
   margenSeguridad: number;
   /** Estado de carga mínimo al llegar al cargador (%). */
@@ -28,6 +34,7 @@ export const CONFIG_MOTOR: ConfigMotor = {
     media: { distancia: 0.3, espera: 0.2, carga: 0.25, costo: 0.25 },
     baja: { distancia: 0.15, espera: 0.15, carga: 0.2, costo: 0.5 },
   },
+  rangosMinimos: { distancia: 3, espera: 15, carga: 30, costo: 2000 },
   margenSeguridad: 0.9,
   socMinimoLlegadaPct: 5,
   eficienciaCarga: 0.9,

@@ -138,6 +138,25 @@ describe('normalización min–max', () => {
 
   it('si max = min, todos valen 0', () => {
     expect(normalizarMinMax([7, 7, 7])).toEqual([0, 0, 0]);
+    expect(normalizarMinMax([7, 7, 7], 3)).toEqual([0, 0, 0]);
+  });
+
+  it('con rango mínimo, una diferencia chica no se amplifica a la escala completa (D-026)', () => {
+    // 1.0 km vs 1.1 km con umbral de 3 km: 0.1 / 3 ≈ 0.033, no 1
+    const [a, b] = normalizarMinMax([1.0, 1.1], 3);
+    expect(a).toBe(0);
+    expect(b).toBeCloseTo(0.0333, 3);
+    // Si la diferencia real supera el umbral, es la min–max clásica
+    expect(normalizarMinMax([10, 20, 30], 5)).toEqual([0, 0.5, 1]);
+  });
+
+  it('los rangos mínimos están configurados para los cuatro criterios', () => {
+    expect(CONFIG_MOTOR.rangosMinimos).toEqual({
+      distancia: 3,
+      espera: 15,
+      carga: 30,
+      costo: 2000,
+    });
   });
 });
 

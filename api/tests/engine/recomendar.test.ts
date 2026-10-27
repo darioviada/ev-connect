@@ -75,6 +75,40 @@ describe('las ponderaciones cambian el orden según la urgencia', () => {
   });
 });
 
+describe('rango mínimo de normalización (D-026)', () => {
+  // Caso real observado con el seed: el rápido está apenas 100 m más lejos que el lento.
+  const candidatos = [
+    candidato(cargador('lento-ac', { tipoConector: 'TIPO_2', potenciaKw: 11, precioKwh: 350 }), {
+      km: 1.0,
+      min: 2,
+    }),
+    candidato(
+      cargador('rapido-dc', { tipoConector: 'CCS_COMBO', potenciaKw: 50, precioKwh: 650 }),
+      {
+        km: 1.1,
+        min: 2,
+      },
+    ),
+  ];
+
+  it('con urgencia alta, 100 m de diferencia no ganan frente a horas de carga', () => {
+    const r = recomendar(entrada(candidatos, { bateriaPct: 15 }));
+    expect(ids(r)[0]).toBe('rapido-dc');
+    const lento = r.recomendaciones.find((x) => x.cargador.id === 'lento-ac')!;
+    expect(lento.metricas.cargaMin).toBeGreaterThan(180); // más de 3 horas de carga
+  });
+
+  it('sin rango mínimo (min–max clásica del SPEC) el resultado se invierte', () => {
+    const r = recomendar(
+      entrada(candidatos, {
+        bateriaPct: 15,
+        config: { rangosMinimos: { distancia: 0, espera: 0, carga: 0, costo: 0 } },
+      }),
+    );
+    expect(ids(r)[0]).toBe('lento-ac');
+  });
+});
+
 describe('desempate', () => {
   it('a igual score, gana el de menor distancia y luego el nombre', () => {
     // Modo ruta, 90 %: mismo desvío, misma energía (5 kWh), mismo costo → mismo score

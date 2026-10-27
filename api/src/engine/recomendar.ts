@@ -129,6 +129,7 @@ export function recomendar(entrada: EntradaMotor): ResultadoMotor {
   const puntajes = estrategia.puntuar(
     evaluados.map((e) => e.valores),
     pesos,
+    config.rangosMinimos,
   );
   const ordenados = evaluados
     .map((e, i) => ({ ...e, ...puntajes[i]! }))
