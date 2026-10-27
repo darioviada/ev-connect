@@ -4,7 +4,7 @@ Demo funcional del Trabajo Final de Graduación (Ingeniería en Software): un si
 conveniente para un vehículo eléctrico sobre una red colaborativa de cargadores públicos y privados en Argentina
 (zona piloto del seed: Córdoba).
 
-> **Estado:** en construcción (Fase 1, base de datos y seed). Ver `docs/PLAN.md`.
+> **Estado:** en construcción (Fase 4, API REST completa; falta el frontend). Ver `docs/PLAN.md`.
 >
 > **Datos de demostración:** todos los datos de la demo (cargadores, precios, ubicaciones, usuarios, reservas) son
 > **sintéticos**. Las especificaciones de los vehículos son aproximadas.

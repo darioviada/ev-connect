@@ -191,3 +191,36 @@ Así los 8 candidatos quedan **repartidos a lo largo del recorrido** y el motor 
 - **Decisión:** `norm = (x − min) / max(max − min, rangoMínimo)`. Los rangos mínimos son configurables en `engine/config.ts`: **distancia 3 km, espera 15 min, carga 30 min y costo $ 2000**. Si la diferencia real supera el umbral, el resultado es idéntico a la min–max del SPEC. Si no la supera, pesa en proporción (100 m / 3 km ≈ 0.03).
 - **Efecto con el seed:** con urgencia alta pasa a ganar el cargador DC de 44 minutos (88.6 contra 80 puntos). Con urgencia media sigue ganando el AC lento y barato, por poco (75.1 contra 73.2), porque costo y carga pesan lo mismo y la diferencia de costo es grande. Con urgencia baja no cambia el ganador.
 - **Impacto en el informe:** describir la normalización con rango mínimo en la sección del motor y justificar los umbrales. Son valores de diseño, no calibrados con usuarios reales: una línea de trabajo futuro es ajustarlos con datos. Los tests incluyen el caso observado, con y sin rango mínimo.
+
+## 2026-10-27 — Fase 4
+
+### D-027 · La preselección filtra por conectores compatibles
+- **Decisión:** la consulta espacial trae solo cargadores con un conector compatible con el vehículo, y después aplica el límite de 8 candidatos. Si no hay ninguno compatible, se repite sin el filtro, para que el motor informe `SIN_COMPATIBLES` con el motivo de cada descarte.
+- **Motivo:** con el seed, un Nissan Leaf en el Centro recibía 8 candidatos de los que solo 1 servía. Además, consultar rutas de cargadores incompatibles tiene costo en la Routes API sin aportar nada.
+- **Impacto:** cambia el orden de SPEC §6.3, pero no la regla. La compatibilidad se sigue verificando en el motor.
+
+### D-028 · Endpoints y respuestas agregados al SPEC §8
+- **`GET /cargadores/:id`** (público): detalle con disponibilidad y ocupación de los próximos 7 días, sin datos de quién reservó. Lo necesita la pantalla "Detalle y reserva". Un cargador inactivo solo lo ven su dueño o un admin.
+- **`GET /mis-cargadores/reservas`**, **`PATCH /reservas/:id/aceptar`** y **`PATCH /reservas/:id/rechazar`**: el flujo de reservas pendientes (D-020). `GET /mis-cargadores` informa `reservasPendientes`.
+- **Respuesta de `POST /recomendaciones`:** además de lo definido en SPEC §6.5, incluye `vehiculo`, `modo`, `origen`, `destino`, `advertencias` globales (por ejemplo, caída a offline) y en `meta`: `candidatosEvaluados`, `distanciaPreseleccionKm`, `preseleccionAmpliada`, `elementosConsultados` y `elementosDesdeCache`.
+- **`GET /cargadores`:** no se pagina, porque es para el mapa. Devuelve hasta 500 y avisa con `truncado`. Los demás listados paginan con `limit`/`offset`.
+
+### D-029 · Reglas de reserva
+- **Fecha y duración:** el inicio tiene que ser posterior a ahora y estar a 60 días como máximo. La duración va de 15 minutos a 12 horas, sin cruzar medianoche.
+- **Horario:** la reserva completa tiene que caber dentro de una franja del cargador. Se reutiliza la misma función del motor.
+- **Cargador:** no se puede reservar un cargador propio ni uno inactivo (409).
+- **Cancelar:** quien reservó (o un admin), solo antes de que empiece.
+- **Aceptar y rechazar:** el dueño del cargador (o un admin), solo si la reserva está `pendiente`.
+- **Ventana de carga que cruza medianoche:** si una carga estimada termina después de medianoche, `horarioCarga` se informa hasta las 23:59 (D-021). Pasa con cargas AC largas que empiezan de noche. La reserva propuesta cubre la carga solo en parte, y queda documentado como limitación.
+
+### D-030 · Permisos y privacidad
+- **Vehículos de otro usuario:** se responde **404** (no se revela que existen).
+- **Cargadores de otro dueño:** se responde **403**, porque los cargadores son públicos en el mapa. Los cargadores públicos (sin dueño) solo los edita un admin.
+- **Eliminar un cargador con reservas futuras** pendientes o confirmadas: **409** con la sugerencia de desactivarlo, para no borrar reservas de otras personas.
+- **Rol en modo Cognito:** `PATCH /admin/usuarios/:id` con `rol` responde 400, porque el rol lo dan los grupos del User Pool. En el listado, `rol` vale `null` en ese modo.
+- **Autogestión del admin:** un admin no puede deshabilitarse ni quitarse el rol.
+- **Búsquedas por texto (`ILIKE`):** escapan los comodines `%` y `_` que escriba el usuario.
+- **Límites de solicitudes:** 30 por minuto por IP en `/recomendaciones` y `/geocodificar`. Detrás del balanceador hace falta configurar `trust proxy` (Fase 7, igual que D-018).
+
+### D-031 · Seed: nombres de cargadores únicos
+- Dos cargadores públicos del Centro se llamaban "Electrolinera Centro". El tipo de lugar ahora rota con un contador global, y un test verifica que no haya nombres repetidos. Cambian algunos nombres y horarios de estacionamientos respecto de los ejemplos de D-026.
