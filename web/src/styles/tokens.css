@@ -1,18 +1,22 @@
-/* Tokens de diseño (docs/SPEC.md §10.1). Usar siempre estas variables, nunca colores sueltos. */
+/* Tokens de diseño (docs/SPEC.md §10.1). Usar siempre estas variables, nunca colores sueltos.
+   Primario, atenuado, pendiente y error están levemente oscurecidos respecto del SPEC para cumplir un
+   contraste ≥ 4.5:1 en texto normal (WCAG AA). Ver docs/DECISIONES.md D-032. */
 :root {
   /* Colores */
-  --color-primario: #0f9d6b;
+  --color-primario: #0c7f57; /* SPEC: #0F9D6B */
+  --color-primario-hover: #0a6a49;
   --color-primario-claro: #f1fbf6; /* fondo de elementos seleccionados */
   --color-fondo: #f4f6f3;
   --color-superficie: #ffffff;
   --color-texto: #1b1d1a;
   --color-texto-secundario: #55584f;
-  --color-texto-atenuado: #9a9d93;
+  --color-texto-atenuado: #6e7069; /* SPEC: #9A9D93 */
   --color-borde: #dde2dc;
   --color-borde-suave: #e7eae4;
-  --color-pendiente: #b36b00;
+  --color-pendiente: #a36100; /* SPEC: #B36B00 */
   --color-pendiente-fondo: #fff7e6;
-  --color-error: #d4534e; /* también para favoritos */
+  --color-error: #bc4945; /* SPEC: #D4534E; también para favoritos */
+  --color-error-fondo: #fdf0ef;
 
   /* Tipografías */
   --fuente-titulos: 'Sora', system-ui, sans-serif; /* títulos, botones, números */
@@ -33,9 +37,14 @@
   --espacio-6: 32px;
   --espacio-7: 48px;
 
+  /* Sombras */
+  --sombra-tarjeta: 0 1px 2px rgb(27 29 26 / 0.06), 0 4px 16px rgb(27 29 26 / 0.06);
+
   /* Foco visible (accesibilidad) */
   --foco-anillo: 3px solid var(--color-primario);
   --foco-separacion: 2px;
 
-  /* Puntos de quiebre: móvil primero, escritorio desde 1024 px (usar en @media) */
+  /* Layout: móvil primero; escritorio desde 1024 px (usar en @media) */
+  --ancho-contenido: 1040px;
+  --alto-nav-inferior: 68px;
 }

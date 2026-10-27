@@ -14,7 +14,7 @@ body {
 
 body {
   min-height: 100vh;
-  background: var(--color-fondo);
+  background: var(--color-superficie); /* móvil: fondo blanco como los mockups */
   color: var(--color-texto);
   font-family: var(--fuente-cuerpo);
   font-size: 16px;
@@ -41,5 +41,26 @@ button {
   *::after {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+/* Texto solo para lectores de pantalla */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+a {
+  color: var(--color-primario);
+}
+
+/* Escritorio: fondo gris y contenido en tarjetas blancas */
+@media (min-width: 1024px) {
+  body {
+    background: var(--color-fondo);
   }
 }
