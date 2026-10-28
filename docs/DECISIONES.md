@@ -309,3 +309,55 @@ Valores tal como los imprime `npm run validate` (mejora = (base − sistema) / b
 - **Optimalidad:** se mantiene cerca del 98 %.
 
 Hay que informar estos resultados tal como salen, con la semilla y la cantidad de escenarios.
+
+## 2026-10-28 — Fase 7
+
+### D-038 · Imagen y contenedores
+- **`api/Dockerfile` multi-etapa sobre `node:24-alpine`:**
+  - La etapa de build compila la web (las `VITE_*` entran como *build args*) y la API.
+  - La etapa final instala solo las dependencias de producción de la API, corre como usuario `node` (no root), expone el puerto 3000 y tiene *healthcheck* sobre `/api/v1/salud`. Pesa 281 MB.
+  - En la imagen, `npm run db:migrate` y `npm run db:seed` usan el código compilado (sin `tsx`), así la tarea única de migración de ECS funciona como dice AWS_DEPLOY §4.5.
+- **La API sirve la web** cuando existe `WEB_DIST` (la imagen la define). Los archivos de `/assets` llevan caché larga y cualquier otro GET que no sea de `/api` devuelve `index.html`.
+- **CSP (helmet):**
+  - Permite los mosaicos de `tile.openstreetmap.org`, la conexión a `*.amazonaws.com` (Cognito) y estilos en línea (Leaflet/React).
+  - Desactiva `upgrade-insecure-requests`, porque la demo corre por http://localhost; en la nube el https lo da el balanceador.
+  - Verificado en el navegador: sin errores de consola ni bloqueos.
+- **`TRUST_PROXY`:** cuántos proxies son confiables. Va en 1 detrás del ALB, para que los límites de solicitudes usen la IP real. Cierra el pendiente de D-018 y D-030; está agregado en AWS_DEPLOY §6.2.
+- **`JWT_SECRET` en el contenedor** (cierra D-003): con `AUTH_MODE=local`, si falta o es el de demostración, `docker-entrypoint.sh` genera uno aleatorio por contenedor. `docker compose up` funciona sin editar nada y nunca se usa en producción un secreto conocido. Al reiniciar el contenedor hay que volver a iniciar sesión.
+- **Comandos de base con configuración mínima:** `db:migrate` y `db:seed` validan solo `DATABASE_URL`, `AUTH_MODE` y `TZ`. Así funcionan con `docker exec` y en la tarea de migración de ECS, sin secretos ni variables de Cognito.
+- **`docker compose up --build`:** la app espera a que la base esté sana, migra y siembra solo si la base está vacía (`seed --si-vacia`). Los puertos son configurables (`DB_PORT`, `APP_PORT`), y lee el `.env` si existe.
+
+### D-039 · Verificación en una copia limpia (28/10/2026)
+- **Opción A (contenedores):** se clonó el repositorio en una carpeta nueva, se copió `.env.example` a `.env` y se corrió `docker compose -p evprueba up --build` con otros puertos. Quedó sano en **82 s**, con imagen construida, migraciones y seed.
+  - Con Playwright se recorrió búsqueda, resultados, mapa con mosaicos, login y reservas, sin errores de consola ni de CSP.
+  - Se probó el reinicio (no vuelve a sembrar) y `npm run db:migrate` dentro de la imagen. Al final se borró el entorno de prueba.
+- **Opción B (desarrollo):** en la misma copia, `npm install` tardó 26 s; lint sin errores; **357 tests en verde**; build correcto. Unos 100 s en total.
+- **Pendiente para el autor:** verificarlo en otra computadora (MANUAL_TASKS H). Docker Desktop tiene que estar en ejecución.
+- **Sin verificar:** la imagen `postgis/postgis:16-3.4` en Mac con procesador Apple Silicon. Si no hubiera variante arm64, Docker la ejecuta emulada y anda, pero más lento.
+
+### D-040 · Licencias
+- Ver `docs/LICENCIAS.md`. **react-leaflet usa la Hippocratic License 2.1** (licencia "ética", no aprobada por la OSI). El uso académico no la contradice, pero conviene mencionarlo; la alternativa es usar Leaflet (BSD-2-Clause) sin el envoltorio de React.
+
+## Resumen: diferencias con el diseño del informe (para actualizar el DER, el diagrama de clases y el diccionario de datos)
+
+**Modelo de datos** (SPEC §15 y lo agregado durante la construcción):
+1. `cargador.precio_kwh`, `cargador.nombre` y `cargador.direccion`.
+2. `vehiculo_modelo` y `vehiculo_usuario`: `potencia_max_ac` y `potencia_max_dc`.
+3. `usuario.activo`.
+4. `reserva.rango` (columna generada) y la restricción `EXCLUDE` contra solapes. La reserva `pendiente` significa "esperando aprobación del dueño del cargador" (D-020) y también bloquea el horario.
+5. Tablas de infraestructura: `cache_ruta` (distancias) y **`cache_trazado`** (recorridos de Google, D-034). `dev_credencial` existe solo en modo local.
+6. Vista `vehiculo_usuario_detalle` e índices en claves foráneas (D-010).
+
+**Comportamiento y diseño:**
+7. **Alcance nacional** con piloto en Córdoba (D-001).
+8. **Preselección espacial:**
+   - solo conectores compatibles (D-027);
+   - en modo ruta, repartida por tramos a lo largo del recorrido (D-025);
+   - proveedor de rutas con caché (mitigación del riesgo R4).
+9. **Normalización min–max con rango mínimo por criterio** (D-026): es un desvío respecto de la min–max pura.
+10. **Flujo de aprobación de reservas en cargadores privados:** aceptar o rechazar, con endpoints nuevos (D-020 y D-028).
+11. **Reglas de reserva** (D-029): dentro del horario del cargador, no en el pasado, de 15 min a 12 h y hasta 60 días de anticipación.
+12. **Trazado real de la ruta** con `computeRoutes` cuando el proveedor es Google (D-034): agrega un pedido de *Compute Routes Essentials* por búsqueda en modo ruta al análisis de costos.
+13. **Tokens de color** ajustados por contraste WCAG AA (D-032).
+14. **Arquitectura de despliegue:** una sola imagen que sirve API y web, sin S3 ni CloudFront (D-038; coincide con MANUAL_TASKS F).
+15. **Validación:** método y resultados en D-036 y D-037, y en `docs/validacion/resultados.md`. Copiar al informe **solo** esos números, con la semilla y la cantidad de escenarios.
