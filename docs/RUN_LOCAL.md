@@ -48,10 +48,13 @@ También se puede crear un usuario nuevo desde "Registrarme". Sin iniciar sesió
 
 ## Pruebas y validación
 ```bash
-npm test             # pruebas del motor, la API y los proveedores
+npm test             # pruebas del motor, la API y los proveedores (necesita la base: npm run db:up)
 npm run lint         # estilo y tipos
 npm run validate -- --scenarios 200 --seed 42    # comparación contra la selección manual simulada
 ```
+Los tests de la API usan una base aparte (`tfg_test`) y `npm run validate` otra (`tfg_validacion`): ninguno toca los datos
+de la demo. La validación usa el proveedor de rutas offline aunque haya clave de Google y escribe
+`docs/validacion/resultados.md` y `resultados.csv`.
 
 ## Variables de entorno principales (ver `.env.example`)
 `AUTH_MODE=local` · `ROUTING_PROVIDER=offline` · `GEOCODING_PROVIDER=static` · `DATABASE_URL` · `JWT_SECRET` · `PORT`.
@@ -63,7 +66,9 @@ Con esos valores no se usa ningún servicio externo. Para usar Cognito o la Rout
 En todos los casos las extensiones se crean con las migraciones: `postgis` y `btree_gist`.
 
 ## Problemas frecuentes
-- *Puerto 5432 ocupado:* cambiar el puerto publicado en `docker-compose.yml` y en `DATABASE_URL`.
+- *Puerto 5432 o 3000 ocupado:* definir `DB_PORT` y/o `APP_PORT` antes de `docker compose up` (por ejemplo `DB_PORT=55432`) y, si cambia la base, ajustar `DATABASE_URL` en `.env`.
+- *`docker compose up` y `npm run dev` a la vez:* los dos usan el puerto 3000; apagá uno antes de levantar el otro.
+- *Configuraste una clave de Google en `.env`:* tanto el contenedor como `npm run dev` la usan y cada búsqueda consulta la Routes API (con costo). Para volver al modo gratuito: `ROUTING_PROVIDER=offline`.
 - *`extension "postgis" is not available`:* la base no tiene PostGIS instalado (usar la imagen `postgis/postgis`).
 - *El mapa no carga:* el navegador necesita internet para los mosaicos de OpenStreetMap (la API funciona sin conexión).
-- *Búsqueda de direcciones vacía:* con `GEOCODING_PROVIDER=static` solo hay una lista fija de lugares de Córdoba; usar el botón de pin o el clic en el mapa.
+- *Búsqueda de direcciones vacía:* con `GEOCODING_PROVIDER=static` solo hay una lista fija (barrios de Córdoba y ciudades principales del país); usar el botón de pin o el clic en el mapa. La búsqueda se hace al apretar Enter.

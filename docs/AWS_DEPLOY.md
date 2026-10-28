@@ -38,7 +38,9 @@ Mejora opcional: MFA para los administradores.
 
 ## 6. Amazon ECS con Fargate
 1. **Clúster** de ECS (Fargate).
-2. **Definición de tarea:** Fargate, **0,5 vCPU y 1 GB**, contenedor con la imagen de ECR, puerto 3000. Variables: `AUTH_MODE=cognito`, `COGNITO_*`, `ROUTING_PROVIDER=google`, `GEOCODING_PROVIDER=static` (o `nominatim` con uso liviano), `TZ=America/Argentina/Cordoba`, `NODE_ENV=production`.
+2. **Definición de tarea:** Fargate, **0,5 vCPU y 1 GB**, contenedor con la imagen de ECR, puerto 3000. Variables: `AUTH_MODE=cognito`, `COGNITO_*`, `ROUTING_PROVIDER=google`, `GEOCODING_PROVIDER=static` (o `nominatim` con uso liviano), `TZ=America/Argentina/Cordoba`, `NODE_ENV=production`,
+   `TRUST_PROXY=1` (la API está detrás del balanceador: así el límite de solicitudes usa la IP real del cliente).
+   La imagen ya define `WEB_DIST` y sirve la web; `CORS_ORIGIN` debe ser el dominio público (https://…).
    Los secretos (`DATABASE_URL`, `GOOGLE_MAPS_API_KEY`) se inyectan desde Secrets Manager o Parameter Store, **no** como texto plano.
 3. **Rol de ejecución** (descargar la imagen de ECR, escribir logs en CloudWatch, leer los secretos) y **rol de tarea** (vacío; solo agregar permisos de Cognito de administración si se implementa esa función P2).
 4. **Logs** con el controlador `awslogs`, con retención corta para no acumular costo.
