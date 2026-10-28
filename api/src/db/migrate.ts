@@ -1,19 +1,19 @@
 // npm run db:migrate            → aplica las migraciones pendientes
 // npm run db:migrate -- --down  → revierte todas (útil en desarrollo; borra los datos)
-import { cargarConfig, ConfigError } from '../config/index.js';
+import { cargarConfigBase, ConfigError } from '../config/index.js';
 import { crearKnex } from './knex.js';
 import { migrarTodo, revertirTodo } from './migraciones.js';
 
 async function main() {
-  const config = cargarConfig();
+  const config = cargarConfigBase();
   const db = crearKnex(config.databaseUrl, config.tz);
   try {
     if (process.argv.includes('--down')) {
-      await revertirTodo(db, config.auth.mode);
+      await revertirTodo(db, config.authMode);
       console.log('Migraciones revertidas.');
       return;
     }
-    for (const { nombre, aplicadas } of await migrarTodo(db, config.auth.mode)) {
+    for (const { nombre, aplicadas } of await migrarTodo(db, config.authMode)) {
       if (aplicadas.length === 0) {
         console.log(`${nombre}: sin migraciones pendientes.`);
       } else {

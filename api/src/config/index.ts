@@ -1,9 +1,16 @@
 // Carga el archivo .env (si existe) y devuelve la configuración validada.
 import { existsSync } from 'node:fs';
 import path from 'node:path';
-import { parseConfig, type Config } from './env.js';
+import { parseConfig, parseConfigBase, type Config, type ConfigBase } from './env.js';
 
-export { ConfigError, JWT_SECRET_DEMO, parseConfig, type Config } from './env.js';
+export {
+  ConfigError,
+  JWT_SECRET_DEMO,
+  parseConfig,
+  parseConfigBase,
+  type Config,
+  type ConfigBase,
+} from './env.js';
 
 /**
  * Busca un .env subiendo desde `desde` (el script de npm corre en `api/`, el archivo vive en la raíz).
@@ -27,4 +34,10 @@ export function cargarArchivoEnv(desde = process.cwd(), niveles = 3): string | u
 export function cargarConfig(): Config {
   cargarArchivoEnv();
   return parseConfig(process.env);
+}
+
+/** Configuración mínima para migrar y sembrar (sin secretos ni variables de Cognito). */
+export function cargarConfigBase(): ConfigBase {
+  cargarArchivoEnv();
+  return parseConfigBase(process.env);
 }

@@ -4,12 +4,12 @@
 import { sembrar } from '../../seeds/demo.js';
 import { USUARIOS_DEMO } from '../../seeds/generar.js';
 import { hoyEnZona } from '../../seeds/fechas.js';
-import { cargarConfig, ConfigError } from '../config/index.js';
+import { cargarConfigBase, ConfigError } from '../config/index.js';
 import { crearKnex } from './knex.js';
 
 async function main() {
   const reset = process.argv.includes('--reset');
-  const config = cargarConfig();
+  const config = cargarConfigBase();
   const db = crearKnex(config.databaseUrl, config.tz);
   try {
     if (process.argv.includes('--si-vacia')) {
@@ -22,7 +22,7 @@ async function main() {
       }
     }
     const hoy = hoyEnZona(config.tz);
-    const r = await sembrar(db, { reset, modoAuth: config.auth.mode, hoy });
+    const r = await sembrar(db, { reset, modoAuth: config.authMode, hoy });
     console.log(`Datos de demostración (sintéticos) cargados${reset ? ' desde cero' : ''}:`);
     console.log(`  - ${r.modelos} modelos de vehículo (especificaciones aproximadas)`);
     console.log(

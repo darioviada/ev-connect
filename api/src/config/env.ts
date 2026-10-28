@@ -156,3 +156,29 @@ export function parseConfig(entorno: Record<string, string | undefined>): Config
     advertencias,
   };
 }
+
+/** Lo mínimo para los comandos de base de datos (migrar y sembrar): no requieren secretos ni Cognito. */
+export interface ConfigBase {
+  databaseUrl: string;
+  authMode: 'local' | 'cognito';
+  tz: string;
+}
+
+const esquemaBase = z.object({
+  DATABASE_URL: z
+    .string({ error: 'es obligatoria (ej.: postgres://tfg:tfg@localhost:5432/tfg)' })
+    .regex(/^postgres(ql)?:\/\//, 'debe empezar con postgres:// o postgresql://'),
+  AUTH_MODE: z.enum(['local', 'cognito']).default('local'),
+  TZ: z.string().default('America/Argentina/Cordoba'),
+});
+
+export function parseConfigBase(entorno: Record<string, string | undefined>): ConfigBase {
+  const limpio = Object.fromEntries(
+    Object.entries(entorno).filter(([, v]) => v !== undefined && v.trim() !== ''),
+  );
+  const r = esquemaBase.safeParse(limpio);
+  if (!r.success) {
+    throw new ConfigError(r.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`));
+  }
+  return { databaseUrl: r.data.DATABASE_URL, authMode: r.data.AUTH_MODE, tz: r.data.TZ };
+}

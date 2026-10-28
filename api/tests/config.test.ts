@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ConfigError, JWT_SECRET_DEMO, parseConfig } from '../src/config/index.js';
+import { ConfigError, JWT_SECRET_DEMO, parseConfig, parseConfigBase } from '../src/config/index.js';
 import { ENTORNO_MINIMO } from './helpers.js';
 
 function problemas(entorno: Record<string, string | undefined>): string[] {
@@ -89,5 +89,25 @@ describe('parseConfig', () => {
   it('acepta varios orígenes de CORS separados por coma', () => {
     const config = parseConfig({ ...ENTORNO_MINIMO, CORS_ORIGIN: 'http://a.test, http://b.test' });
     expect(config.corsOrigins).toEqual(['http://a.test', 'http://b.test']);
+  });
+});
+
+describe('parseConfigBase (comandos de base de datos)', () => {
+  it('no exige JWT_SECRET ni variables de Cognito, y acepta el secreto de demo en producción', () => {
+    expect(
+      parseConfigBase({
+        DATABASE_URL: 'postgres://a@b/c',
+        NODE_ENV: 'production',
+        AUTH_MODE: 'cognito',
+      }),
+    ).toEqual({
+      databaseUrl: 'postgres://a@b/c',
+      authMode: 'cognito',
+      tz: 'America/Argentina/Cordoba',
+    });
+  });
+
+  it('exige DATABASE_URL', () => {
+    expect(() => parseConfigBase({})).toThrow(ConfigError);
   });
 });
