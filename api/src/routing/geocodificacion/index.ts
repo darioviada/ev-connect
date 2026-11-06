@@ -4,7 +4,13 @@ import { StaticGeocodingProvider } from './static.js';
 import type { GeocodingProvider } from './tipos.js';
 
 export { LUGARES } from './lugares.js';
-export { NominatimProvider, URL_NOMINATIM, USER_AGENT_NOMINATIM } from './nominatim.js';
+export {
+  expandirAbreviaturas,
+  nombreDeResultado,
+  NominatimProvider,
+  URL_NOMINATIM,
+  USER_AGENT_NOMINATIM,
+} from './nominatim.js';
 export { normalizarTexto, StaticGeocodingProvider } from './static.js';
 export * from './tipos.js';
 

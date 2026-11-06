@@ -4,6 +4,8 @@ import {
   crearGeocodingProvider,
   GeocodificacionNoDisponibleError,
   LUGARES,
+  expandirAbreviaturas,
+  nombreDeResultado,
   NominatimProvider,
   StaticGeocodingProvider,
   URL_NOMINATIM,
@@ -80,7 +82,9 @@ describe('NominatimProvider (fetch simulado)', () => {
     expect(`${url.origin}${url.pathname}`).toBe(URL_NOMINATIM);
     expect(url.searchParams.get('format')).toBe('jsonv2');
     expect(url.searchParams.get('countrycodes')).toBe('ar');
-    expect(url.searchParams.get('q')).toBe('cordoba');
+    expect(url.searchParams.get('q')).toBe('Córdoba');
+    expect(url.searchParams.get('addressdetails')).toBe('1');
+    expect(url.searchParams.has('viewbox')).toBe(false);
     expect(init.headers).toMatchObject({ 'User-Agent': USER_AGENT_NOMINATIM });
     expect(r).toEqual([
       {
@@ -128,6 +132,122 @@ describe('NominatimProvider (fetch simulado)', () => {
     const geo = new NominatimProvider({ fetch, ...relojSimulado() });
     await expect(geo.buscar('x')).rejects.toBeInstanceOf(GeocodificacionNoDisponibleError);
     await expect(geo.buscar('y')).resolves.toHaveLength(1);
+  });
+});
+
+describe('Nominatim: direcciones', () => {
+  it('muestra "Calle número" para una dirección y el nombre para un lugar', () => {
+    expect(
+      nombreDeResultado({
+        lat: '0',
+        lon: '0',
+        display_name: '1234, Avenida Colón, Alberdi, Córdoba, Argentina',
+        address: { house_number: '1234', road: 'Avenida Colón', suburb: 'Alberdi' },
+      }),
+    ).toBe('Avenida Colón 1234');
+    expect(
+      nombreDeResultado({
+        lat: '0',
+        lon: '0',
+        display_name: 'x',
+        address: { road: 'Bv. San Juan' },
+      }),
+    ).toBe('Bv. San Juan');
+    expect(
+      nombreDeResultado({ lat: '0', lon: '0', name: 'Rosario', display_name: 'Rosario, Santa Fe' }),
+    ).toBe('Rosario');
+    expect(nombreDeResultado({ lat: '0', lon: '0', display_name: 'Paraná, Entre Ríos' })).toBe(
+      'Paraná',
+    );
+  });
+
+  it('busca primero cerca del punto de referencia (viewbox lon1,lat1,lon2,lat2 con bounded=1)', async () => {
+    const fetch = vi.fn(async () => respuestaNominatim());
+    const geo = new NominatimProvider({
+      fetch: fetch as unknown as typeof globalThis.fetch,
+      ...relojSimulado(),
+    });
+    await geo.buscar('Colón 1234', { cerca: { lat: -31.4201, lng: -64.1888 } });
+    expect(fetch).toHaveBeenCalledTimes(1); // hubo resultados locales: no hace falta el segundo paso
+    const [url] = fetch.mock.calls[0]! as unknown as [URL];
+    // referencia redondeada a 0,1° (−31,4; −64,2) ± 0,15°
+    expect(url.searchParams.get('viewbox')).toBe('-64.35,-31.25,-64.05,-31.55');
+    expect(url.searchParams.get('bounded')).toBe('1');
+    expect(url.searchParams.get('q')).toBe('Colón 1234');
+  });
+
+  it('si no hay resultados cerca, busca en todo el país respetando 1 pedido por segundo', async () => {
+    const reloj = relojSimulado();
+    const momentos: number[] = [];
+    const fetch = vi
+      .fn()
+      .mockImplementationOnce(async () => {
+        momentos.push(reloj.ahora());
+        return new Response('[]', { status: 200 });
+      })
+      .mockImplementationOnce(async () => {
+        momentos.push(reloj.ahora());
+        return respuestaNominatim();
+      });
+    const geo = new NominatimProvider({ fetch, ...reloj });
+    const r = await geo.buscar('San Martín 100, Rosario', { cerca: { lat: -31.42, lng: -64.19 } });
+    expect(fetch).toHaveBeenCalledTimes(2);
+    const [segunda] = fetch.mock.calls[1]! as unknown as [URL];
+    expect(segunda.searchParams.has('viewbox')).toBe(false);
+    expect(momentos[1]! - momentos[0]!).toBeGreaterThanOrEqual(1000);
+    expect(r).toHaveLength(1);
+  });
+
+  it('expande abreviaturas de calles ("Bv" → "Bulevar", "Gral" → "General")', async () => {
+    expect(expandirAbreviaturas('Bv San Juan 500')).toBe('Bulevar San Juan 500');
+    expect(expandirAbreviaturas('bv. san juan 500')).toBe('Bulevar san juan 500');
+    expect(expandirAbreviaturas('Gral Paz 100')).toBe('General Paz 100');
+    expect(expandirAbreviaturas('Pje Santa Fe 10')).toBe('Pasaje Santa Fe 10');
+    expect(expandirAbreviaturas('Bvlgari 3')).toBe('Bvlgari 3');
+    const fetch = vi.fn(async () => respuestaNominatim());
+    const geo = new NominatimProvider({
+      fetch: fetch as unknown as typeof globalThis.fetch,
+      ...relojSimulado(),
+    });
+    await geo.buscar('Bv San Juan 500');
+    const [url] = fetch.mock.calls[0]! as unknown as [URL];
+    expect(url.searchParams.get('q')).toBe('Bulevar San Juan 500');
+  });
+
+  it('avisa cuando se pidió una altura y solo se encontró la calle', async () => {
+    const fetch = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify([
+            {
+              lat: '-31.43',
+              lon: '-64.19',
+              display_name: 'Boulevard San Juan, Güemes, Córdoba',
+              address: { road: 'Boulevard San Juan' },
+            },
+          ]),
+          { status: 200 },
+        ),
+    );
+    const geo = new NominatimProvider({
+      fetch: fetch as unknown as typeof globalThis.fetch,
+      ...relojSimulado(),
+    });
+    const [lugar] = await geo.buscar('Bulevar San Juan 500');
+    expect(lugar!.nombre).toBe('Boulevard San Juan');
+    expect(lugar!.descripcion).toMatch(/^Ubicación aproximada \(calle\)/);
+  });
+
+  it('la caché distingue la referencia de cercanía', async () => {
+    const fetch = vi.fn(async () => respuestaNominatim());
+    const geo = new NominatimProvider({
+      fetch: fetch as unknown as typeof globalThis.fetch,
+      ...relojSimulado(),
+    });
+    await geo.buscar('San Martín 100', { cerca: { lat: -31.42, lng: -64.19 } });
+    await geo.buscar('San Martín 100', { cerca: { lat: -31.43, lng: -64.18 } }); // misma zona → caché
+    await geo.buscar('San Martín 100', { cerca: { lat: -32.95, lng: -60.64 } }); // Rosario → nuevo pedido
+    expect(fetch).toHaveBeenCalledTimes(2);
   });
 });
 

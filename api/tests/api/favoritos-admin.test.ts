@@ -1,5 +1,5 @@
 // Favoritos y rutas guardadas (HU-011), geocodificación y administración de usuarios (P2).
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { GeocodificacionNoDisponibleError } from '../../src/routing/geocodificacion/index.js';
 import { appDePrueba } from '../helpers.js';
 import {
@@ -80,7 +80,7 @@ describe('geocodificación', () => {
     expect((await cliente(ctx.app).get('/geocodificar?q=a')).status).toBe(400);
   });
 
-  it('si el proveedor externo falla → 503 con mensaje para el usuario', async () => {
+  it('si el proveedor externo falla, cae a la lista fija y avisa', async () => {
     const app = appDePrueba({
       db: ctx.db,
       geocoding: {
@@ -90,9 +90,30 @@ describe('geocodificación', () => {
         },
       },
     });
-    const res = await cliente(app).get('/geocodificar?q=centro');
-    expect(res.status).toBe(503);
-    expect(res.body.error.code).toBe('GEOCODIFICACION_NO_DISPONIBLE');
+    const res = await cliente(app).get('/geocodificar?q=nueva%20cordoba');
+    expect(res.status).toBe(200);
+    expect(res.body.proveedor).toBe('static');
+    expect(res.body.resultados[0].nombre).toBe('Nueva Córdoba');
+    expect(res.body.aviso).toMatch(/solo barrios y ciudades/);
+  });
+
+  it('acepta un punto de referencia y valida su formato', async () => {
+    const buscar = vi.fn(async () => []);
+    const app = appDePrueba({ db: ctx.db, geocoding: { nombre: 'nominatim', buscar } });
+    expect(
+      (await cliente(app).get('/geocodificar?q=Colón%201234&cerca=-31.42,-64.19')).status,
+    ).toBe(200);
+    expect(buscar).toHaveBeenCalledWith('Colón 1234', { cerca: { lat: -31.42, lng: -64.19 } });
+    expect((await cliente(app).get('/geocodificar?q=colon&cerca=999,0')).status).toBe(400);
+  });
+
+  it('GET /configuracion informa los proveedores sin datos sensibles', async () => {
+    const res = await cliente(ctx.app).get('/configuracion');
+    expect(res.body).toEqual({
+      geocodificacion: 'static',
+      proveedorRutas: 'offline',
+      modoAuth: 'local',
+    });
   });
 });
 
