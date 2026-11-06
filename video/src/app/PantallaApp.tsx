@@ -3,7 +3,13 @@
 import type { ReactNode } from 'react';
 import { MemoryRouter } from 'react-router';
 import '../../../web/src/styles/global.css';
+import { EstilosMovil } from './EstilosMovil';
 
 export function PantallaApp({ children }: { children: ReactNode }) {
-  return <MemoryRouter>{children}</MemoryRouter>;
+  return (
+    <MemoryRouter>
+      <EstilosMovil />
+      {children}
+    </MemoryRouter>
+  );
 }

@@ -1,5 +1,6 @@
 // Marco de celular (390 × 844, como un teléfono actual) con barra de estado. Adentro va la app real.
 import type { CSSProperties, ReactNode } from 'react';
+import { CLASE_CELULAR } from '../app/EstilosMovil';
 
 export const PANTALLA = { ancho: 390, alto: 844 } as const;
 const BISEL = 14;
@@ -31,7 +32,12 @@ export function MarcoCelular({ children, style }: { children: ReactNode; style?:
         }}
       >
         <BarraDeEstado />
-        <div style={{ position: 'relative', flex: 1, overflow: 'hidden' }}>{children}</div>
+        <div
+          className={CLASE_CELULAR}
+          style={{ position: 'relative', flex: 1, overflow: 'hidden' }}
+        >
+          {children}
+        </div>
         {/* Indicador de inicio */}
         <div
           style={{

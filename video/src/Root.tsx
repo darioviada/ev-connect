@@ -13,15 +13,20 @@ import {
 import { Escena01Apertura } from './escenas/Escena01Apertura';
 import { Escena02Roles } from './escenas/Escena02Roles';
 import { Escena03Acceso } from './escenas/Escena03Acceso';
+import { Escena04Vehiculos } from './escenas/Escena04Vehiculos';
+import { precargarImagenes } from './app/precarga';
+import { DOLPHIN_MINI, E208 } from './datos/vehiculos';
 import { Pendiente } from './escenas/Pendiente';
 
 cargarFuentes();
+precargarImagenes([DOLPHIN_MINI.fotoUrl!, E208.fotoUrl!]);
 
 /** Escenas ya armadas; el resto muestra un marcador con su tramo de la línea de tiempo. */
 const COMPONENTES: Partial<Record<string, ComponentType>> = {
   apertura: Escena01Apertura,
   roles: Escena02Roles,
   acceso: Escena03Acceso,
+  vehiculos: Escena04Vehiculos,
 };
 
 function EscenaDe({ escena }: { escena: TramoEscena }) {
