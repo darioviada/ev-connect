@@ -296,16 +296,18 @@ Valores tal como los imprime `npm run validate` (mejora = (base − sistema) / b
 
 | Semilla | Comparables | Cercanía | Tiempo total | Costo | Elige distinto que la base | Optimalidad prom. | Sin solución por preselección |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| 42 (oficial) | 185 | −12,1 % | +9,1 % | +0,6 % | 34,6 % | 97,9 % | 1 |
-| 1 | 187 | −7,6 % | +10,0 % | −1,9 % | 29,9 % | 97,8 % | 3 |
-| 7 | 184 | −9,9 % | +6,3 % | −0,9 % | 31,0 % | 98,2 % | 2 |
-| 2026 | 190 | −6,2 % | +11,1 % | −2,2 % | 32,1 % | 97,9 % | 1 |
+| 42 (oficial) | 186 | −12,0 % | +8,9 % | +0,6 % | 34,4 % | 97,9 % | 0 |
+| 1 | 188 | −7,8 % | +10,1 % | −1,7 % | 30,3 % | 97,6 % | 2 |
+| 7 | 185 | −9,8 % | +6,3 % | −0,9 % | 30,8 % | 98,2 % | 1 |
+| 2026 | 190 | −6,0 % | +9,4 % | −0,8 % | 31,6 % | 97,9 % | 1 |
 | 99 | 186 | −9,9 % | +4,4 % | +3,0 % | 34,9 % | 97,9 % | 2 |
 
+Tabla actualizada el 2026-11-06, después de D-044 (preselección limitada al alcance en modo ruta).
+
 **Lectura:**
-- **Tiempo total:** la mejora es consistente (entre +4 % y +11 %).
+- **Tiempo total:** la mejora es consistente (entre +4 % y +10 %).
 - **Cercanía:** siempre se cede algo (entre 6 % y 12 %), como corresponde por definición.
-- **Costo:** **en el total no hay una mejora consistente** (entre −2,2 % y +3,0 %). La mejora en costo aparece solo con urgencia baja, donde el costo pesa 50 %; con urgencia alta el costo empeora.
+- **Costo:** **en el total no hay una mejora consistente** (entre −1,7 % y +3,0 %). La mejora en costo aparece solo con urgencia baja, donde el costo pesa 50 %; con urgencia alta el costo empeora.
 - **Optimalidad:** se mantiene cerca del 98 %.
 
 Hay que informar estos resultados tal como salen, con la semilla y la cantidad de escenarios.
@@ -399,3 +401,23 @@ Hay que informar estos resultados tal como salen, con la semilla y la cantidad d
   - "Villa Carlos Paz" devuelve la ciudad y "Nueva Córdoba" el barrio.
   - "Colón 1234" devuelve Avenida Colón 1234 de Córdoba.
   - "General Paz 100" devuelve la de Córdoba capital.
+
+## 2026-11-06 — Modo ruta: solo cargadores alcanzables (pedido del autor)
+
+### D-044 · El primer tramo siempre entra en la autonomía actual
+- **Problema reportado:** con 10 % de batería (Volvo EX30, 38,3 km de autonomía), en un viaje a Villa Carlos Paz parecía recomendarse un cargador a 40 km.
+- **Diagnóstico** (reproducido con las distancias de Google guardadas en la caché, sin consultar a Google):
+  - El motor ya descartaba los cargadores de Villa Carlos Paz (31–32 km) por FUERA_DE_AUTONOMIA. El recomendado estaba a 12,9 km.
+  - Los 40 km eran el recorrido total hasta el destino que muestra la hoja del mapa.
+  - La tarjeta, en modo ruta, mostraba solo el desvío y no la distancia hasta el cargador.
+  - Además, la preselección por tramos (D-025) repartía los tramos sobre **toda** la ruta. Con poca batería, 3 de los 8 lugares quedaban ocupados por cargadores inalcanzables.
+- **Decisión:**
+  - **Alcance máximo:** se agrega `alcanceMaximoKm` al motor, la inversa exacta de `esAlcanzable`: el mínimo entre la autonomía × margen 0,9 y la distancia que deja el SoC de llegada en 5 %. Con 10 % en el EX30 da unos 19 km, no 34,5.
+  - **Preselección en ruta:** los tramos se reparten solo sobre la parte de la línea origen→destino que entra en ese alcance. Se excluyen los cargadores a más de esa distancia en línea recta del origen. La distancia por calles nunca es menor que la recta, así que no se pierde ningún cargador alcanzable; la regla del motor sigue siendo la que decide.
+  - **Sin cargadores alcanzables:** se repite la preselección sin el límite, para que el motor informe FUERA_DE_AUTONOMIA con el detalle de cada descartado.
+  - **Interfaz:**
+    - La tarjeta en ruta muestra "A X km · desvío Y km".
+    - La leyenda dice "Recorrido total hasta el destino".
+    - El motivo de descarte informa el alcance máximo real ("con la batería actual se llega a X km como máximo") en lugar de la "autonomía útil", que no tenía en cuenta el SoC mínimo.
+- **Impacto en la validación (semilla 42):** el caso que quedaba sin solución solo por la preselección ahora tiene solución (186 comparables, antes 185). El resto de las métricas se mueve décimas. La tabla de D-037 se actualizó con las cinco semillas.
+- **Alcance:** sigue siendo una sola parada de carga (SPEC §2). No se planifica el resto del viaje desde el cargador.

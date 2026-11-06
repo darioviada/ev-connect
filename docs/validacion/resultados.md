@@ -15,29 +15,29 @@
 
 ## Resultados
 
-- Escenarios: **200**. Con solución para el sistema y para la base: **185**.
+- Escenarios: **200**. Con solución para el sistema y para la base: **186**.
 - Sin solución evaluando todos los cargadores: **14** (FUERA_DE_AUTONOMIA: 13, SIN_DISPONIBILIDAD: 1). En esos casos nadie podría recomendar nada: por ejemplo, batería insuficiente o sin cargadores compatibles disponibles.
-- Sin solución **solo por la preselección** (había un cargador factible fuera de los candidatos): **1**.
-- El sistema elige un cargador **distinto** que la línea base en el **34,6 %** de los escenarios comparables.
-- El sistema elige el **óptimo** del conjunto completo en el **52,4 %** de los escenarios comparables.
+- Sin solución **solo por la preselección** (había un cargador factible fuera de los candidatos): **0**.
+- El sistema elige un cargador **distinto** que la línea base en el **34,4 %** de los escenarios comparables.
+- El sistema elige el **óptimo** del conjunto completo en el **52,7 %** de los escenarios comparables.
 - **Grado de optimalidad:** promedio **97,9 %**, mediana 100,0 %, mínimo 76,1 %.
 
 ### Sistema frente a línea base
 
 | Métrica | Sistema (prom.) | Línea base (prom.) | Mejora del sistema | Sistema (mediana) | Línea base (mediana) | Sistema mejor / igual / peor |
 |---|---:|---:|---:|---:|---:|---:|
-| Cercanía: distancia (ubicación) o desvío (ruta), km | 3,3 | 3,0 | -12,1 % | 2,5 | 2,2 | 0 % / 65 % / 35 % |
-| Distancia del origen al cargador (km) | 5,7 | 6,7 | +15,1 % | 4,0 | 4,0 | 9 % / 65 % / 26 % |
+| Cercanía: distancia (ubicación) o desvío (ruta), km | 3,3 | 3,0 | -12,0 % | 2,5 | 2,1 | 0 % / 66 % / 34 % |
+| Distancia del origen al cargador (km) | 5,7 | 6,7 | +15,1 % | 3,9 | 4,0 | 9 % / 66 % / 26 % |
 | Espera (min) | 1,8 | 4,4 | +59,6 % | 0,0 | 0,0 | 4 % / 96 % / 0 % |
-| Tiempo de carga (min) | 73,7 | 78,8 | +6,4 % | 39,5 | 38,7 | 14 % / 72 % / 14 % |
-| Tiempo total: viaje + espera + carga (min) | 84,4 | 92,8 | +9,1 % | 52,2 | 55,2 | 18 % / 65 % / 16 % |
-| Costo estimado (ARS) | 8.375,6 | 8.429,0 | +0,6 % | 5.099,0 | 5.688,0 | 25 % / 65 % / 10 % |
+| Tiempo de carga (min) | 75,6 | 80,7 | +6,3 % | 39,6 | 38,8 | 13 % / 73 % / 14 % |
+| Tiempo total: viaje + espera + carga (min) | 86,3 | 94,7 | +8,9 % | 52,5 | 55,3 | 18 % / 66 % / 16 % |
+| Costo estimado (ARS) | 8.415,7 | 8.468,8 | +0,6 % | 5.221,0 | 5.766,5 | 25 % / 66 % / 10 % |
 
 ### Por urgencia
 
 | Grupo | Escenarios | Con solución | Cercanía, km: sistema / base (mejora) | Tiempo total, min: sistema / base (mejora) | Costo, ARS: sistema / base (mejora) | Elige distinto que la base | Optimalidad promedio |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| Urgencia alta | 64 | 49 | 2,97 / 2,94 (-1,2 %) | 136,8 / 161,1 (+15,1 %) | 17.915 / 16.806 (-6,6 %) | 16 % | 98,1 % |
+| Urgencia alta | 64 | 50 | 2,92 / 2,88 (-1,2 %) | 142,8 / 166,6 (+14,3 %) | 17.873 / 16.786 (-6,5 %) | 16 % | 98,1 % |
 | Urgencia media | 74 | 74 | 3,21 / 3,04 (-5,7 %) | 84,5 / 92,2 (+8,3 %) | 7.804 / 8.092 (+3,6 %) | 30 % | 98,4 % |
 | Urgencia baja | 62 | 62 | 3,74 / 2,91 (-28,7 %) | 42,9 / 39,6 (-8,2 %) | 1.518 / 2.211 (+31,3 %) | 55 % | 97,1 % |
 
@@ -46,7 +46,7 @@
 | Grupo | Escenarios | Con solución | Cercanía, km: sistema / base (mejora) | Tiempo total, min: sistema / base (mejora) | Costo, ARS: sistema / base (mejora) | Elige distinto que la base | Optimalidad promedio |
 |---|---:|---:|---:|---:|---:|---:|---:|
 | Ubicación | 154 | 145 | 3,99 / 3,68 (-8,3 %) | 88,9 / 93,0 (+4,4 %) | 7.945 / 8.052 (+1,3 %) | 28 % | 98,3 % |
-| Ruta | 46 | 40 | 0,92 / 0,38 (-141,6 %) | 67,9 / 92,1 (+26,2 %) | 9.936 / 9.796 (-1,4 %) | 57 % | 96,6 % |
+| Ruta | 46 | 41 | 0,91 / 0,38 (-139,5 %) | 76,9 / 100,5 (+23,4 %) | 10.079 / 9.943 (-1,4 %) | 56 % | 96,7 % |
 
 ## Lectura de los resultados
 
