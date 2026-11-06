@@ -82,18 +82,39 @@ export interface EstimacionCarga {
   costoEstimado: number;
 }
 
-/** §6.4 — energía hasta el objetivo, tiempo de carga (lineal) y costo. */
+/**
+ * Plan de viaje (D-045): SoC con el que hay que salir para recorrer `tramoKm` cumpliendo `esAlcanzable`,
+ * más `margenCargaViajePct` puntos, redondeado hacia arriba y con tope de 100 %.
+ */
+export function objetivoParaTramoPct(
+  vehiculo: VehiculoMotor,
+  tramoKm: number,
+  config: Pick<ConfigMotor, 'margenSeguridad' | 'socMinimoLlegadaPct' | 'margenCargaViajePct'>,
+): number {
+  const consumoPct = (tramoKm * vehiculo.consumoKwhPor100km) / vehiculo.capacidadBateriaKwh;
+  const necesario = Math.max(
+    consumoPct / config.margenSeguridad,
+    consumoPct + config.socMinimoLlegadaPct,
+  );
+  return Math.min(100, Math.ceil(necesario + config.margenCargaViajePct));
+}
+
+/**
+ * §6.4 — energía hasta el objetivo, tiempo de carga (lineal) y costo. Sin `objetivoPct`, el objetivo es
+ * max(objetivoMinimoPct, llegada + objetivoExtraPct); el plan de viaje pasa el suyo.
+ */
 export function estimarCarga(
   vehiculo: VehiculoMotor,
   socLlegada: number,
   potenciaEfectiva: number,
   precioKwh: number,
   config: Pick<ConfigMotor, 'objetivoMinimoPct' | 'objetivoExtraPct'>,
+  objetivoForzadoPct?: number,
 ): EstimacionCarga {
-  const objetivoPct = Math.min(
-    100,
-    Math.max(config.objetivoMinimoPct, socLlegada + config.objetivoExtraPct),
-  );
+  const objetivoPct =
+    objetivoForzadoPct !== undefined
+      ? Math.min(100, Math.max(objetivoForzadoPct, socLlegada))
+      : Math.min(100, Math.max(config.objetivoMinimoPct, socLlegada + config.objetivoExtraPct));
   const energiaKwh = Math.max(0, ((objetivoPct - socLlegada) / 100) * vehiculo.capacidadBateriaKwh);
   return {
     objetivoPct,

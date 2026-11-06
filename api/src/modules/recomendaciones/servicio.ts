@@ -7,13 +7,15 @@ import { CONFIG_MOTOR } from '../../engine/config.js';
 import { alcanceMaximoKm, esCompatible } from '../../engine/reglas.js';
 import type {
   CandidatoMotor,
+  CargadorRuta,
   LatLng,
   Modo,
   ResultadoMotor,
   VehiculoMotor,
 } from '../../engine/tipos.js';
 import type { Config } from '../../config/index.js';
-import type { Celda, RoutingProvider } from '../../routing/tipos.js';
+import { haversineM } from '../../routing/offline.js';
+import type { Celda, RoutingProvider, Trazado } from '../../routing/tipos.js';
 import {
   aCargadorMotor,
   aFranjaMotor,
@@ -22,7 +24,31 @@ import {
 } from '../cargadores/cargadores.repo.js';
 import { CONECTORES, hhmm } from '../comun/esquemas.js';
 import { fechaRelativa, type Reloj } from '../comun/reloj.js';
-import { preseleccionar, type Preseleccion } from './preseleccion.js';
+import { porViaje, preseleccionar, type Preseleccion } from './preseleccion.js';
+
+/**
+ * Plan de viaje (D-045): corredor alrededor del trazado real o, sin trazado, de la recta. En viajes largos
+ * la ruta se aparta de la recta (la RN 9 pasa ~50 km al norte a la altura de Villa María), así que sin
+ * trazado el corredor crece con la longitud del viaje.
+ */
+const CORREDOR_VIAJE_TRAZADO_KM = 10;
+const CORREDOR_VIAJE_RECTA_MIN_KM = 20;
+const CORREDOR_RECTA_FRACCION = 0.12;
+const CORREDOR_RECTA_PRIMERA_FRACCION = 0.1;
+const LIMITE_CARGADORES_VIAJE = 300;
+
+/** Línea del viaje y anchos de corredor (primera parada y plan) según haya trazado real o no. */
+function geometriaViaje(pedido: PedidoMotor, trazado: Trazado | null, corredorKm: number) {
+  if (trazado && trazado.puntos.length >= 2) {
+    return { linea: trazado.puntos, corredorKm, corredorPlanKm: CORREDOR_VIAJE_TRAZADO_KM };
+  }
+  const rectaKm = haversineM(pedido.origen, pedido.destino!) / 1000;
+  return {
+    linea: [pedido.origen, pedido.destino!],
+    corredorKm: Math.max(corredorKm, CORREDOR_RECTA_PRIMERA_FRACCION * rectaKm),
+    corredorPlanKm: Math.max(CORREDOR_VIAJE_RECTA_MIN_KM, CORREDOR_RECTA_FRACCION * rectaKm),
+  };
+}
 
 export interface PedidoMotor {
   vehiculo: VehiculoMotor;
@@ -89,25 +115,11 @@ export async function construirCandidatos(
     directo = { distanciaM: 0, duracionS: 0, fuente: 'offline-estimado' };
   }
 
-  const ids = filas.map((f) => f.id);
-  const franjas = await franjasPorCargador(db, ids);
-  const reservas =
-    ids.length === 0
-      ? []
-      : await db('reserva')
-          .whereIn('cargador_id', ids)
-          .whereNot('estado', 'cancelada')
-          .whereBetween('fecha', [fechaRelativa(reloj, -1), fechaRelativa(reloj, 2)])
-          .select('cargador_id', 'fecha', 'hora_inicio', 'hora_fin');
-
-  const candidatos: CandidatoMotor[] = filas.map((f, i) => ({
-    cargador: aCargadorMotor(f),
+  const agendas = await agendasDe(db, reloj, filas);
+  const candidatos: CandidatoMotor[] = filas.map((_, i) => ({
+    ...agendas[i]!,
     desdeOrigen: aTrayecto(desdeOrigen[i]!),
     ...(pedido.modo === 'ruta' ? { haciaDestino: aTrayecto(haciaDestino[i]!) } : {}),
-    franjas: franjas.get(f.id)!.map(aFranjaMotor),
-    reservas: reservas
-      .filter((r) => r.cargador_id === f.id)
-      .map((r) => ({ fecha: r.fecha, horaInicio: hhmm(r.hora_inicio), horaFin: hhmm(r.hora_fin) })),
   }));
 
   return {
@@ -119,11 +131,55 @@ export async function construirCandidatos(
   };
 }
 
+/** Cargador con sus franjas y reservas activas (de ayer a pasado mañana). */
+async function agendasDe(
+  db: Knex,
+  reloj: Reloj,
+  filas: readonly FilaCargador[],
+): Promise<CargadorRuta[]> {
+  const ids = filas.map((f) => f.id);
+  const franjas = await franjasPorCargador(db, ids);
+  const reservas =
+    ids.length === 0
+      ? []
+      : await db('reserva')
+          .whereIn('cargador_id', ids)
+          .whereNot('estado', 'cancelada')
+          .whereBetween('fecha', [fechaRelativa(reloj, -1), fechaRelativa(reloj, 2)])
+          .select('cargador_id', 'fecha', 'hora_inicio', 'hora_fin');
+  return filas.map((f) => ({
+    cargador: aCargadorMotor(f),
+    franjas: franjas.get(f.id)!.map(aFranjaMotor),
+    reservas: reservas
+      .filter((r) => r.cargador_id === f.id)
+      .map((r) => ({ fecha: r.fecha, horaInicio: hhmm(r.hora_inicio), horaFin: hhmm(r.hora_fin) })),
+  }));
+}
+
+/** Modo ruta (D-045): cargadores compatibles a lo largo de todo el viaje, posibles paradas del plan. */
+export async function cargadoresDelViaje(
+  ctx: ContextoCalculo,
+  pedido: PedidoMotor,
+  trazado: Trazado | null,
+): Promise<CargadorRuta[]> {
+  const conectores = CONECTORES.filter((c) => esCompatible(pedido.vehiculo, c));
+  const g = geometriaViaje(pedido, trazado, ctx.engine.corridorKm);
+  const filas = await porViaje(
+    ctx.db,
+    g.linea,
+    conectores,
+    g.corredorPlanKm,
+    LIMITE_CARGADORES_VIAJE,
+  );
+  return agendasDe(ctx.db, ctx.reloj, filas);
+}
+
 /** Ejecuta el motor sobre candidatos ya construidos. */
 export function ejecutarMotor(
   pedido: PedidoMotor,
   construidos: CandidatosConstruidos,
   reloj: Reloj,
+  cargadoresRuta?: readonly CargadorRuta[],
 ): ResultadoMotor {
   return recomendar({
     vehiculo: pedido.vehiculo,
@@ -134,6 +190,7 @@ export function ejecutarMotor(
     ...(construidos.directo ? { trayectoDirecto: aTrayecto(construidos.directo) } : {}),
     ahora: reloj.ahora(),
     candidatos: construidos.candidatos,
+    ...(cargadoresRuta ? { cargadoresRuta } : {}),
     config: { zonaHoraria: reloj.zonaHoraria },
   });
 }
@@ -141,6 +198,10 @@ export function ejecutarMotor(
 export interface ResultadoCalculo extends CandidatosConstruidos {
   resultado: ResultadoMotor;
   preseleccion: Preseleccion;
+  /** Solo modo ruta: camino real por calles (Google) o null (offline o error). */
+  trazado: Trazado | null;
+  /** Solo modo ruta: cargadores de todo el viaje que usó el plan (vacío en modo ubicación). */
+  cargadoresRuta: CargadorRuta[];
 }
 
 /** Camino completo de la API: preselección (solo compatibles, D-027) → rutas → motor. */
@@ -149,20 +210,30 @@ export async function calcularRecomendacion(
   pedido: PedidoMotor,
 ): Promise<ResultadoCalculo> {
   const compatibles = CONECTORES.filter((c) => esCompatible(pedido.vehiculo, c));
+  // Modo ruta: el trazado sirve para dibujar el camino y para buscar las paradas sobre él (D-045).
+  const trazado =
+    pedido.modo === 'ruta' ? await ctx.rutas.trazado(pedido.origen, pedido.destino!) : null;
+  const geometria =
+    pedido.modo === 'ruta' ? geometriaViaje(pedido, trazado, ctx.engine.corridorKm) : null;
   const parametros = {
     modo: pedido.modo,
     origen: pedido.origen,
     ...(pedido.destino ? { destino: pedido.destino } : {}),
     radioKm: ctx.engine.searchRadiusKm,
-    corredorKm: ctx.engine.corridorKm,
+    corredorKm: geometria?.corredorKm ?? ctx.engine.corridorKm,
     limite: ctx.engine.candidatesLimit,
+    ...(geometria ? { linea: geometria.linea } : {}),
   };
+  // La recta es una cota inferior del recorrido: si ni eso alcanza, seguro hay que cargar en el camino.
+  const alcanceActualKm = alcanceMaximoKm(pedido.vehiculo, pedido.bateriaPct, CONFIG_MOTOR);
+  const necesitaCargar =
+    pedido.modo === 'ruta' && haversineM(pedido.origen, pedido.destino!) / 1000 > alcanceActualKm;
   // En ruta, los lugares de la preselección se usan solo en cargadores alcanzables (D-044).
   let preseleccion = await preseleccionar(ctx.db, {
     ...parametros,
     conectores: compatibles,
     ...(pedido.modo === 'ruta'
-      ? { alcanceKm: alcanceMaximoKm(pedido.vehiculo, pedido.bateriaPct, CONFIG_MOTOR) }
+      ? { alcanceKm: alcanceActualKm, priorizarPotencia: necesitaCargar }
       : {}),
   });
   if (preseleccion.filas.length === 0 && pedido.modo === 'ruta') {
@@ -174,9 +245,13 @@ export async function calcularRecomendacion(
     preseleccion = await preseleccionar(ctx.db, { ...parametros, conectores: CONECTORES });
   }
   const construidos = await construirCandidatos(ctx, preseleccion.filas, pedido);
+  const cargadoresRuta =
+    pedido.modo === 'ruta' ? await cargadoresDelViaje(ctx, pedido, trazado) : [];
   return {
     ...construidos,
     preseleccion,
-    resultado: ejecutarMotor(pedido, construidos, ctx.reloj),
+    trazado,
+    cargadoresRuta,
+    resultado: ejecutarMotor(pedido, construidos, ctx.reloj, cargadoresRuta),
   };
 }

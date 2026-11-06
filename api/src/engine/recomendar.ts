@@ -11,15 +11,19 @@ import {
   socLlegadaPct,
   urgenciaDe,
 } from './reglas.js';
+import { distanciaRectaKm } from './geo.js';
 import { estrategiaWSM, type ScoringStrategy, type ValoresCriterios } from './scoring.js';
 import { aFechaHora, aMinutosLocales } from './tiempo.js';
+import { planificarViaje, type ContextoViaje } from './viaje.js';
 import type {
   CandidatoMotor,
+  CargadorRuta,
   CodigoSinResultados,
   Descarte,
   LatLng,
   Metricas,
   Modo,
+  PlanViaje,
   Recomendacion,
   ResultadoMotor,
   Trayecto,
@@ -37,6 +41,11 @@ export interface EntradaMotor {
   /** Inyectable para tests. */
   ahora: Date;
   candidatos: readonly CandidatoMotor[];
+  /**
+   * Solo modo ruta: cargadores a lo largo de todo el viaje, posibles paradas siguientes del plan (D-045).
+   * Si falta, se usan los candidatos.
+   */
+  cargadoresRuta?: readonly CargadorRuta[];
   estrategia?: ScoringStrategy;
   config?: Partial<ConfigMotor>;
 }
@@ -49,6 +58,7 @@ const MENSAJES: Record<CodigoSinResultados, string> = {
     'Hay cargadores compatibles, pero ninguno está al alcance con la batería actual (margen de seguridad del 10 %).',
   SIN_DISPONIBILIDAD:
     'Los cargadores compatibles y al alcance no están disponibles en las próximas 2 horas.',
+  VIAJE_NO_POSIBLE: 'No es posible completar este viaje con el vehículo elegido.',
 };
 
 interface Evaluado {
@@ -56,6 +66,7 @@ interface Evaluado {
   metricas: Metricas;
   valores: ValoresCriterios;
   advertencias: string[];
+  plan?: PlanViaje;
 }
 
 const r1 = (x: number) => Math.round(x * 10) / 10;
@@ -69,17 +80,37 @@ export function recomendar(entrada: EntradaMotor): ResultadoMotor {
   const { vehiculo, bateriaPct } = entrada;
   const urgencia = urgenciaDe(bateriaPct);
   const pesos = config.pesos[urgencia];
+  // Modo ruta (D-045): si con la batería actual no se llega al destino, cada primera parada se evalúa
+  // con su plan de viaje completo.
+  const viaje =
+    entrada.modo === 'ruta'
+      ? {
+          distanciaKm: r1(entrada.trayectoDirecto!.distanciaKm),
+          llegaSinCargar: esAlcanzable(
+            vehiculo,
+            bateriaPct,
+            entrada.trayectoDirecto!.distanciaKm,
+            config,
+          ),
+          alcanceConCargaCompletaKm: r1(alcanceMaximoKm(vehiculo, 100, config)),
+        }
+      : undefined;
   const base = {
     urgencia,
     autonomiaActualKm: r1(autonomiaKm(vehiculo, bateriaPct)),
     pesos,
     estrategia: estrategia.nombre,
+    ...(viaje ? { viaje } : {}),
   };
-  const sinResultados = (codigo: CodigoSinResultados, descartados: Descarte[]): ResultadoMotor => ({
+  const sinResultados = (
+    codigo: CodigoSinResultados,
+    descartados: Descarte[],
+    mensaje = MENSAJES[codigo],
+  ): ResultadoMotor => ({
     ...base,
     recomendaciones: [],
     descartados,
-    sinResultados: { codigo, mensaje: MENSAJES[codigo] },
+    sinResultados: { codigo, mensaje },
   });
 
   if (entrada.candidatos.length === 0) return sinResultados('SIN_CARGADORES_CERCANOS', []);
@@ -118,13 +149,62 @@ export function recomendar(entrada: EntradaMotor): ResultadoMotor {
 
   // 3. Estimaciones y disponibilidad en la ventana de carga
   const ahoraMin = aMinutosLocales(entrada.ahora, config.zonaHoraria);
+  const ctxViaje = viaje && !viaje.llegaSinCargar ? contextoViaje(entrada, config) : null;
+  let mejorIntento: PlanViaje | null = null;
   const evaluados: Evaluado[] = [];
   for (const c of alcanzables) {
-    const resultado = evaluar(c, entrada, config, ahoraMin);
+    let plan: PlanViaje | undefined;
+    if (ctxViaje) {
+      plan = planificarViaje(ctxViaje, {
+        cargador: { cargador: c.cargador, franjas: c.franjas, reservas: c.reservas },
+        socLlegadaPct: socLlegadaPct(vehiculo, bateriaPct, c.desdeOrigen.distanciaKm),
+        llegadaMin: ahoraMin + c.desdeOrigen.duracionMin,
+        tramoKm: c.desdeOrigen.distanciaKm,
+        viajeMin: c.desdeOrigen.duracionMin,
+        restanteKm: c.haciaDestino!.distanciaKm,
+      });
+      if (!plan.factible) {
+        const problema = plan.problema!;
+        if (problema.motivo === 'SIN_ALCANCE') {
+          descartar(c, 'VIAJE_NO_POSIBLE', problema.mensaje);
+          if (!mejorIntento || problema.desdeKm > mejorIntento.problema!.desdeKm)
+            mejorIntento = plan;
+        } else {
+          descartar(c, 'SIN_DISPONIBILIDAD', problema.mensaje);
+        }
+        continue;
+      }
+    }
+    const resultado = evaluar(c, entrada, config, ahoraMin, plan);
     if ('detalle' in resultado) descartar(c, 'SIN_DISPONIBILIDAD', resultado.detalle);
     else evaluados.push(resultado);
   }
-  if (evaluados.length === 0) return sinResultados('SIN_DISPONIBILIDAD', descartados);
+  // Con plan, una "primera parada" donde no hace falta cargar no es una recomendación útil: el plan
+  // sigue de largo. Se descarta si hay otras opciones.
+  const sinCarga = (e: Evaluado) => e.plan !== undefined && e.metricas.energiaKwh < 0.1;
+  if (evaluados.some(sinCarga) && !evaluados.every(sinCarga)) {
+    for (const e of evaluados.filter(sinCarga)) {
+      const siguiente = e.plan!.paradas[1]?.cargador.nombre;
+      descartar(
+        e.candidato,
+        'CARGA_INNECESARIA',
+        siguiente
+          ? `Con la batería al llegar no hace falta cargar acá: el plan sigue hasta ${siguiente}.`
+          : 'Con la batería al llegar no hace falta cargar acá.',
+      );
+    }
+    evaluados.splice(0, evaluados.length, ...evaluados.filter((e) => !sinCarga(e)));
+  }
+  if (evaluados.length === 0) {
+    if (mejorIntento) {
+      return sinResultados(
+        'VIAJE_NO_POSIBLE',
+        descartados,
+        `${MENSAJES.VIAJE_NO_POSIBLE} ${mejorIntento.problema!.mensaje}`,
+      );
+    }
+    return sinResultados('SIN_DISPONIBILIDAD', descartados);
+  }
 
   // 4. Scoring y orden (desempate: menor distancia, luego nombre)
   const puntajes = estrategia.puntuar(
@@ -153,9 +233,32 @@ export function recomendar(entrada: EntradaMotor): ResultadoMotor {
     ) as Recomendacion['desglose'],
     mejorOpcion: i === 0,
     advertencias: e.advertencias,
+    ...(e.plan ? { plan: e.plan } : {}),
   }));
 
   return { ...base, recomendaciones, descartados, sinResultados: null };
+}
+
+/** Factor de circuito y velocidad del trayecto directo, para estimar los tramos entre paradas. */
+function contextoViaje(entrada: EntradaMotor, config: ConfigMotor): ContextoViaje {
+  const directo = entrada.trayectoDirecto!;
+  const recta = distanciaRectaKm(entrada.origen, entrada.destino!);
+  const factor = recta > 1 ? Math.min(2, Math.max(1, directo.distanciaKm / recta)) : 1.35;
+  const porId = new Map<string, CargadorRuta>();
+  for (const c of [...(entrada.cargadoresRuta ?? []), ...entrada.candidatos]) {
+    if (!porId.has(c.cargador.id)) {
+      porId.set(c.cargador.id, { cargador: c.cargador, franjas: c.franjas, reservas: c.reservas });
+    }
+  }
+  return {
+    vehiculo: entrada.vehiculo,
+    destino: entrada.destino!,
+    distanciaTotalKm: directo.distanciaKm,
+    factorCircuito: factor,
+    minPorKm: directo.distanciaKm > 0 ? directo.duracionMin / directo.distanciaKm : 1,
+    cargadores: [...porId.values()],
+    config,
+  };
 }
 
 function evaluar(
@@ -163,6 +266,7 @@ function evaluar(
   entrada: EntradaMotor,
   config: ConfigMotor,
   ahoraMin: number,
+  plan?: PlanViaje,
 ): Evaluado | { detalle: string } {
   const { vehiculo, bateriaPct } = entrada;
   const distanciaKm = c.desdeOrigen.distanciaKm;
@@ -170,7 +274,15 @@ function evaluar(
 
   const socLlegada = socLlegadaPct(vehiculo, bateriaPct, distanciaKm);
   const potencia = potenciaEfectivaKw(vehiculo, c.cargador, config.eficienciaCarga);
-  const carga = estimarCarga(vehiculo, socLlegada, potencia, c.cargador.precioKwh, config);
+  // Con plan de viaje, se carga lo que necesita el tramo siguiente (lo calculó el planificador).
+  const carga = estimarCarga(
+    vehiculo,
+    socLlegada,
+    potencia,
+    c.cargador.precioKwh,
+    config,
+    plan?.paradas[0]?.objetivoPct,
+  );
 
   const llegadaMin = ahoraMin + viajeMin;
   const disp = evaluarDisponibilidad({
@@ -227,17 +339,25 @@ function evaluar(
   if (c.cargador.tipo === 'privado') {
     advertencias.push('Cargador privado: la reserva queda pendiente hasta que el dueño la acepte.');
   }
+  const paradasExtra = plan ? plan.paradas.length - 1 : 0;
+  if (paradasExtra > 0) {
+    advertencias.push(
+      `El viaje necesita ${paradasExtra} parada${paradasExtra === 1 ? '' : 's'} más (ver el plan de viaje).`,
+    );
+  }
 
+  // Con plan, espera, carga y costo se puntúan para el viaje completo (todas las paradas).
   return {
     candidato: c,
     metricas,
     valores: {
       distancia: desvioKm ?? distanciaKm,
-      espera: disp.esperaMin,
-      carga: carga.cargaMin,
-      costo: carga.costoEstimado,
+      espera: plan ? plan.totales.esperaMin : disp.esperaMin,
+      carga: plan ? plan.totales.cargaMin : carga.cargaMin,
+      costo: plan ? plan.totales.costoEstimado : carga.costoEstimado,
     },
     advertencias,
+    ...(plan ? { plan } : {}),
   };
 }
 

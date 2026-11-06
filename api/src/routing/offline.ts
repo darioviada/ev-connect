@@ -1,19 +1,13 @@
 // OfflineProvider (modo demo, sin servicios externos): distancia = Haversine × 1.35 (factor de circuito,
 // para aproximar el recorrido por calles) y velocidad media según la distancia. No considera tráfico.
+import { distanciaRectaKm } from '../engine/geo.js';
 import type { Celda, LatLng, ResultadoMatriz, RoutingProvider, Trazado } from './tipos.js';
 
-const RADIO_TIERRA_M = 6_371_000;
 export const FACTOR_CIRCUITO = 1.35;
-
-const rad = (grados: number) => (grados * Math.PI) / 180;
 
 /** Distancia en línea recta sobre la esfera, en metros. */
 export function haversineM(a: LatLng, b: LatLng): number {
-  const dLat = rad(b.lat - a.lat);
-  const dLng = rad(b.lng - a.lng);
-  const h =
-    Math.sin(dLat / 2) ** 2 + Math.cos(rad(a.lat)) * Math.cos(rad(b.lat)) * Math.sin(dLng / 2) ** 2;
-  return 2 * RADIO_TIERRA_M * Math.asin(Math.min(1, Math.sqrt(h)));
+  return distanciaRectaKm(a, b) * 1000;
 }
 
 /** Velocidad media (km/h): 30 hasta 5 km, 40 hasta 25 km, 60 más allá. */

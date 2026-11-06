@@ -74,7 +74,8 @@ export async function ejecutarValidacion(o: OpcionesValidacion): Promise<Resulta
 
     const sistema = await calcularRecomendacion(ctx, pedido);
     const todos = await construirCandidatos(ctx, activos, pedido);
-    const completo = ejecutarMotor(pedido, todos, reloj);
+    // Mismos cargadores del viaje para el plan (D-045): solo cambia el conjunto de primeras paradas.
+    const completo = ejecutarMotor(pedido, todos, reloj, sistema.cargadoresRuta);
     elementosConsultados += sistema.elementosConsultados + todos.elementosConsultados;
 
     filas.push(

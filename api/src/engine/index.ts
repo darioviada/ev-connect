@@ -5,6 +5,7 @@ export { recomendar, type EntradaMotor } from './recomendar.js';
 export {
   alcanceMaximoKm,
   autonomiaKm,
+  objetivoParaTramoPct,
   esAlcanzable,
   esCompatible,
   estimarCarga,
@@ -20,3 +21,5 @@ export {
   type ValoresCriterios,
 } from './scoring.js';
 export * from './tipos.js';
+export { distanciaRectaKm } from './geo.js';
+export { planificarViaje, type ContextoViaje, type InicioPlan } from './viaje.js';

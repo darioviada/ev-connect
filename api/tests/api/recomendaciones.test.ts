@@ -16,6 +16,8 @@ afterAll(async () => {
 
 const CENTRO = { lat: -31.4201, lng: -64.1888 };
 const CARLOS_PAZ = { lat: -31.4241, lng: -64.4978 };
+const BUENOS_AIRES = { lat: -34.6037, lng: -58.3816 };
+const MENDOZA = { lat: -32.8895, lng: -68.8458 };
 const modelo = (clave: string) => ({ modeloId: uuidDeterministico(`modelo:${clave}`) });
 
 const buscar = (body: object, token?: string) =>
@@ -238,6 +240,51 @@ describe('modo ruta (Córdoba → Villa Carlos Paz)', () => {
     expect(res.body.sinResultados.codigo).toBe('FUERA_DE_AUTONOMIA');
     expect(res.body.descartados.length).toBeGreaterThan(0);
     expect(res.body.descartados[0].detalle).toMatch(/se llega a 0 km como máximo/);
+  });
+
+  it('viaje largo Córdoba → Buenos Aires: plan con paradas sobre la RN 9, cada tramo dentro del alcance (D-045)', async () => {
+    const res = await buscar({
+      vehiculo: modelo('volvo-ex30'),
+      bateriaPct: 80,
+      modo: 'ruta',
+      origen: CENTRO,
+      destino: BUENOS_AIRES,
+    });
+    expect(res.status).toBe(200);
+    const r = res.body;
+    expect(r.viaje.llegaSinCargar).toBe(false);
+    expect(r.meta.cargadoresDelViaje).toBeGreaterThan(10);
+    expect(r.recomendaciones.length).toBeGreaterThan(0);
+    for (const rec of r.recomendaciones) {
+      const plan = rec.plan;
+      expect(plan.factible).toBe(true);
+      expect(plan.paradas.length).toBeGreaterThanOrEqual(2);
+      expect(plan.paradas[0].cargador.id).toBe(rec.cargador.id);
+      for (const parada of plan.paradas.slice(1)) {
+        expect(parada.tramoKm).toBeLessThanOrEqual(r.viaje.alcanceConCargaCompletaKm);
+        expect(parada.socLlegadaPct).toBeGreaterThanOrEqual(5);
+      }
+      expect(plan.llegada.socPct).toBeGreaterThanOrEqual(5);
+      // Las paradas avanzan hacia el destino
+      const kms = plan.paradas.map((x: { kmEnRuta: number }) => x.kmEnRuta);
+      expect([...kms].sort((a, b) => a - b)).toEqual(kms);
+    }
+  });
+
+  it('viaje sin cargadores en el medio (Córdoba → Mendoza): avisa que no es posible y dónde se corta', async () => {
+    const res = await buscar({
+      vehiculo: modelo('byd-seal'),
+      bateriaPct: 100,
+      modo: 'ruta',
+      origen: CENTRO,
+      destino: MENDOZA,
+    });
+    expect(res.status).toBe(200);
+    expect(res.body.recomendaciones).toEqual([]);
+    expect(res.body.sinResultados.codigo).toBe('VIAJE_NO_POSIBLE');
+    expect(res.body.sinResultados.mensaje).toMatch(
+      /No es posible completar este viaje.*lo máximo que recorre el vehículo con la batería llena/,
+    );
   });
 
   it('con el proveedor offline no hay trazado (la interfaz dibuja una recta)', async () => {

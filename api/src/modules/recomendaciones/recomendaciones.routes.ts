@@ -133,11 +133,7 @@ export function recomendacionesRouter(deps: DependenciasApi): Router {
           ...(pedido.destino ? { destino: pedido.destino } : {}),
         },
       );
-      const { resultado, preseleccion: pre } = calculo;
-
-      // Modo ruta: camino real por calles para dibujar en el mapa (solo con Google; offline → null).
-      const trazado =
-        pedido.modo === 'ruta' ? await rutas.trazado(pedido.origen, pedido.destino!) : null;
+      const { resultado, preseleccion: pre, trazado } = calculo;
       const r5 = (x: number) => Math.round(x * 1e5) / 1e5;
 
       deps.logger.info(
@@ -167,6 +163,7 @@ export function recomendacionesRouter(deps: DependenciasApi): Router {
         advertencias: calculo.advertencias,
         meta: {
           candidatosEvaluados: pre.filas.length,
+          cargadoresDelViaje: calculo.cargadoresRuta.length,
           distanciaPreseleccionKm: pre.distanciaKm,
           preseleccionAmpliada: pre.ampliada,
           elementosConsultados: calculo.elementosConsultados,

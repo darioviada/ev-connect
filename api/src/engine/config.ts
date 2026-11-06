@@ -26,6 +26,12 @@ export interface ConfigMotor {
   socBajoAdvertenciaPct: number;
   /** Zona horaria de negocio de franjas y reservas. */
   zonaHoraria: string;
+  /** Plan de viaje (D-045): puntos de SoC que se cargan por encima de lo justo para el tramo siguiente. */
+  margenCargaViajePct: number;
+  /** Una parada siguiente tiene que acercar al destino al menos esto (km). */
+  avanceMinimoKm: number;
+  /** Costo fijo de cada parada extra al comparar planes (min); no se suma a los tiempos informados. */
+  penalidadParadaMin: number;
 }
 
 export const CONFIG_MOTOR: ConfigMotor = {
@@ -43,4 +49,7 @@ export const CONFIG_MOTOR: ConfigMotor = {
   esperaMaximaMin: 120,
   socBajoAdvertenciaPct: 15,
   zonaHoraria: 'America/Argentina/Cordoba',
+  margenCargaViajePct: 10,
+  avanceMinimoKm: 5,
+  penalidadParadaMin: 10,
 };

@@ -25,6 +25,13 @@ export interface ParametrosPreseleccion {
   limite: number;
   /** Solo modo ruta: distancia máxima alcanzable desde el origen (km). */
   alcanceKm?: number;
+  /** Solo modo ruta: trazado real (D-045); si falta, la recta origen→destino. */
+  linea?: readonly LatLng[];
+  /**
+   * Solo modo ruta: dentro de cada tramo, primero el de mayor potencia (D-045). Se usa cuando seguro hace
+   * falta cargar en el camino: ahí un cargador rápido vale más que unos cientos de metros de desvío.
+   */
+  priorizarPotencia?: boolean;
 }
 
 export interface Preseleccion {
@@ -53,22 +60,27 @@ function porRadio(
     .limit(limite) as Promise<FilaCargador[]>;
 }
 
+/** La línea como GeoJSON (parámetro de ST_GeomFromGeoJSON). */
+const lineaGeoJson = (linea: readonly LatLng[]) =>
+  JSON.stringify({ type: 'LineString', coordinates: linea.map((p) => [p.lng, p.lat]) });
+
 async function porCorredor(
   db: Knex,
-  origen: LatLng,
-  destino: LatLng,
+  linea: readonly LatLng[],
   conectores: readonly TipoConector[],
   km: number,
   limite: number,
   alcanceKm: number | undefined,
+  priorizarPotencia = false,
 ): Promise<FilaCargador[]> {
+  // Orden dentro del tramo: valor fijo (no viene del usuario), no se concatena ninguna entrada externa.
+  const ordenTramo = priorizarPotencia ? 'potencia DESC, dist_linea, id' : 'dist_linea, id';
   const alcanceM = alcanceKm === undefined ? null : alcanceKm * 1000;
   // Los conectores son valores de un enum propio (no texto del usuario); igual van como parámetro.
   const arregloConectores = `{${conectores.join(',')}}`;
   const { rows } = await db.raw(
     `WITH linea AS (
-       SELECT ST_MakeLine(ST_SetSRID(ST_MakePoint(?, ?), 4326),
-                          ST_SetSRID(ST_MakePoint(?, ?), 4326)) AS g
+       SELECT ST_Simplify(ST_SetSRID(ST_GeomFromGeoJSON(?), 4326), 0.002) AS g
      ),
      -- Fracción de la línea dentro del alcance: ahí se reparten los tramos.
      param AS (
@@ -90,7 +102,7 @@ async function porCorredor(
           AND (?::float8 IS NULL OR ST_DWithin(c.ubicacion, param.origen, ?::float8))
      ),
      orden AS (
-       SELECT cand.*, ROW_NUMBER() OVER (PARTITION BY tramo ORDER BY dist_linea, id) AS n
+       SELECT cand.*, ROW_NUMBER() OVER (PARTITION BY tramo ORDER BY ${ordenTramo}) AS n
          FROM cand
      )
      SELECT id, usuario_id, nombre, direccion, tipo, tipo_conector, potencia, precio_kwh, estado, lat, lng
@@ -98,10 +110,7 @@ async function porCorredor(
       ORDER BY (n = 1) DESC, dist_linea, id
       LIMIT ?`,
     [
-      origen.lng,
-      origen.lat,
-      destino.lng,
-      destino.lat,
+      lineaGeoJson(linea),
       alcanceM,
       limite,
       limite,
@@ -115,10 +124,48 @@ async function porCorredor(
   return rows as FilaCargador[];
 }
 
+/**
+ * Modo ruta, plan de viaje (D-045): cargadores compatibles a lo largo de TODO el viaje, ordenados por
+ * posición. Usa el trazado real si existe (corredor angosto) o la recta origen→destino (corredor ancho,
+ * porque las rutas se apartan bastante de la recta en viajes largos). No consulta al RoutingProvider.
+ */
+export async function porViaje(
+  db: Knex,
+  linea: readonly LatLng[],
+  conectores: readonly TipoConector[],
+  corredorKm: number,
+  limite: number,
+): Promise<FilaCargador[]> {
+  const { rows } = await db.raw(
+    `WITH linea AS (
+       SELECT ST_Simplify(ST_SetSRID(ST_GeomFromGeoJSON(?), 4326), 0.005) AS g
+     )
+     SELECT c.id, c.usuario_id, c.nombre, c.direccion, c.tipo, c.tipo_conector, c.potencia,
+            c.precio_kwh, c.estado,
+            ST_Y(c.ubicacion::geometry) AS lat, ST_X(c.ubicacion::geometry) AS lng
+       FROM cargador c, linea
+      WHERE c.estado = 'activo'
+        AND c.tipo_conector = ANY(?::tipo_conector[])
+        AND ST_DWithin(c.ubicacion, linea.g::geography, ?)
+      ORDER BY ST_LineLocatePoint(linea.g, c.ubicacion::geometry), c.id
+      LIMIT ?`,
+    [lineaGeoJson(linea), `{${conectores.join(',')}}`, corredorKm * 1000, limite],
+  );
+  return rows as FilaCargador[];
+}
+
 export async function preseleccionar(db: Knex, p: ParametrosPreseleccion): Promise<Preseleccion> {
   const buscar = (km: number) =>
     p.modo === 'ruta'
-      ? porCorredor(db, p.origen, p.destino!, p.conectores, km, p.limite, p.alcanceKm)
+      ? porCorredor(
+          db,
+          p.linea ?? [p.origen, p.destino!],
+          p.conectores,
+          km,
+          p.limite,
+          p.alcanceKm,
+          p.priorizarPotencia,
+        )
       : porRadio(db, p.origen, p.conectores, km, p.limite);
 
   const base = p.modo === 'ruta' ? p.corredorKm : p.radioKm;
