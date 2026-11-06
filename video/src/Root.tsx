@@ -19,6 +19,7 @@ import { Escena06Recomendaciones } from './escenas/Escena06Recomendaciones';
 import { Escena07Reserva } from './escenas/Escena07Reserva';
 import { Escena08Publicar } from './escenas/Escena08Publicar';
 import { Escena09Favoritos } from './escenas/Escena09Favoritos';
+import { Escena10Cierre } from './escenas/Escena10Cierre';
 import { precargarImagenes } from './app/precarga';
 import { DOLPHIN_MINI, E208 } from './datos/vehiculos';
 import { Pendiente } from './escenas/Pendiente';
@@ -37,6 +38,7 @@ const COMPONENTES: Partial<Record<string, ComponentType>> = {
   reserva: Escena07Reserva,
   publicar: Escena08Publicar,
   favoritos: Escena09Favoritos,
+  cierre: Escena10Cierre,
 };
 
 function EscenaDe({ escena }: { escena: TramoEscena }) {
