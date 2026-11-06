@@ -361,3 +361,19 @@ Hay que informar estos resultados tal como salen, con la semilla y la cantidad d
 13. **Tokens de color** ajustados por contraste WCAG AA (D-032).
 14. **Arquitectura de despliegue:** una sola imagen que sirve API y web, sin S3 ni CloudFront (D-038; coincide con MANUAL_TASKS F).
 15. **Validación:** método y resultados en D-036 y D-037, y en `docs/validacion/resultados.md`. Copiar al informe **solo** esos números, con la semilla y la cantidad de escenarios.
+
+## 2026-11-06 — Búsqueda de direcciones exactas (pedido del autor)
+
+### D-041 · Nominatim como geocodificador por defecto y búsqueda en dos pasos
+- **Problema:** el buscador decía "Dirección o barrio", pero con `GEOCODING_PROVIDER=static` solo reconoce una lista fija de barrios y ciudades: las direcciones no se encontraban.
+- **Decisión del autor:** usar Nominatim, que ya estaba implementado y es gratuito y sin cuenta. Queda como **valor por defecto en `.env.example`**. Es un desvío de SPEC §4.3: con `static` la demo no usa ningún servicio externo; con Nominatim requiere internet, como ya lo requerían los mosaicos del mapa.
+- **Mejoras para direcciones** (verificadas en la documentación oficial el 06/11/2026 y con consultas reales):
+  - **Detalle de la dirección:** se pide `addressdetails=1` para mostrar "Avenida Colón 1234" y no solo "1234".
+  - **Búsqueda en dos pasos:** primero solo cerca de un punto de referencia (`viewbox` de unos 16 km con `bounded=1`) y, si no hay resultados, en todo el país. Solo con prioridad (`bounded=0`), "General Paz 100" devolvía otras localidades en lugar de la avenida de Córdoba capital.
+  - **Punto de referencia:** el punto ya elegido, el origen (al buscar el destino) o el centro del mapa.
+  - **Abreviaturas:** se expanden las que Nominatim no reconoce ("Bv" → "Bulevar", "Gral" → "General", "Pje" → "Pasaje", "Pte" → "Presidente").
+  - **Precisión:** si se pidió una altura y OpenStreetMap no tiene la numeración, el resultado se marca como "Ubicación aproximada (calle)".
+- **Respaldo:** si Nominatim no responde, la API usa la lista fija y devuelve un `aviso` (antes respondía 503).
+- **Interfaz:** `GET /api/v1/configuracion` (público, sin secretos) informa los proveedores activos. Con eso, el campo dice "Calle y número, barrio o ciudad" (Nominatim) o "Barrio o ciudad" (lista fija), con mensajes específicos cuando no hay resultados y la atribución de OpenStreetMap junto a los resultados.
+- **Política de uso:** se mantiene: 1 pedido por segundo (los dos pasos también), `User-Agent` propio, caché de 24 horas y búsqueda solo al confirmar (sin autocompletado). Para apagarlo, `GEOCODING_PROVIDER=static`.
+- **Limitación:** la precisión depende de los datos de OpenStreetMap. Hay calles sin numeración cargada, y para otras ciudades conviene escribir la ciudad ("San Martín 100, Rosario").

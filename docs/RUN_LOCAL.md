@@ -57,8 +57,8 @@ de la demo. La validación usa el proveedor de rutas offline aunque haya clave d
 `docs/validacion/resultados.md` y `resultados.csv`.
 
 ## Variables de entorno principales (ver `.env.example`)
-`AUTH_MODE=local` · `ROUTING_PROVIDER=offline` · `GEOCODING_PROVIDER=static` · `DATABASE_URL` · `JWT_SECRET` · `PORT`.
-Con esos valores no se usa ningún servicio externo. Para usar Cognito o la Routes API de Google ver `docs/MANUAL_TASKS.md`.
+`AUTH_MODE=local` · `ROUTING_PROVIDER=offline` · `GEOCODING_PROVIDER=nominatim` · `DATABASE_URL` · `JWT_SECRET` · `PORT`.
+Con esos valores no se usa ningún servicio con cuenta ni con costo. La búsqueda de direcciones usa Nominatim (OpenStreetMap, gratuito y sin cuenta); para no usar ningún servicio externo, poné `GEOCODING_PROVIDER=static` (solo barrios y ciudades). Para usar Cognito o la Routes API de Google ver `docs/MANUAL_TASKS.md`.
 
 ## Alternativas para la base de datos (si no se puede usar Docker)
 1. **PostgreSQL nativo con PostGIS:** instalar PostgreSQL 16 y PostGIS (instaladores oficiales en Windows/macOS/Linux), crear la base `tfg` y el usuario, y ajustar `DATABASE_URL`.
@@ -71,4 +71,4 @@ En todos los casos las extensiones se crean con las migraciones: `postgis` y `bt
 - *Configuraste una clave de Google en `.env`:* tanto el contenedor como `npm run dev` la usan y cada búsqueda consulta la Routes API (con costo). Para volver al modo gratuito: `ROUTING_PROVIDER=offline`.
 - *`extension "postgis" is not available`:* la base no tiene PostGIS instalado (usar la imagen `postgis/postgis`).
 - *El mapa no carga:* el navegador necesita internet para los mosaicos de OpenStreetMap (la API funciona sin conexión).
-- *Búsqueda de direcciones vacía:* con `GEOCODING_PROVIDER=static` solo hay una lista fija (barrios de Córdoba y ciudades principales del país); usar el botón de pin o el clic en el mapa. La búsqueda se hace al apretar Enter.
+- *Búsqueda de direcciones vacía:* la búsqueda se hace al apretar Enter. Con Nominatim, si una dirección no aparece, agregá la ciudad ("Colón 1234, Córdoba") o marcá el punto en el mapa; algunas calles no tienen la numeración cargada en OpenStreetMap. Con `GEOCODING_PROVIDER=static` solo hay una lista fija de barrios y ciudades.

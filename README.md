@@ -14,7 +14,7 @@ costo. Tiene alcance nacional (Argentina); la zona piloto de los datos de demost
 ## Inicio rápido
 
 No hace falta ninguna cuenta externa: por defecto `AUTH_MODE=local`, `ROUTING_PROVIDER=offline` y
-`GEOCODING_PROVIDER=static`. La guía completa (requisitos, guion de demo y problemas frecuentes) está en
+`GEOCODING_PROVIDER=nominatim` (búsqueda de direcciones con OpenStreetMap, gratuita y sin cuenta). La guía completa (requisitos, guion de demo y problemas frecuentes) está en
 **[docs/RUN_LOCAL.md](docs/RUN_LOCAL.md)**.
 
 **Opción A: todo en contenedores** (requiere Docker). La primera vez crea las tablas y carga los datos.
@@ -114,7 +114,7 @@ Todas las variables están en [`.env.example`](.env.example). Para usar servicio
 
 - **Amazon Cognito:** `AUTH_MODE=cognito` y las variables `COGNITO_*` / `VITE_COGNITO_*`.
 - **Google Routes API:** `GOOGLE_MAPS_API_KEY` y `ROUTING_PROVIDER=auto`. **Tiene costo por uso**: configurá antes alertas de presupuesto. La clave se usa solo en el backend.
-- **Nominatim:** `GEOCODING_PROVIDER=nominatim`. Solo uso liviano, según su política.
+- **Búsqueda de direcciones:** `GEOCODING_PROVIDER=nominatim` (por defecto; uso liviano según su política) o `static` (solo barrios y ciudades, sin servicios externos).
 
 Nunca subas el `.env` al repositorio: está en `.gitignore`.
 
