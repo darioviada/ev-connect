@@ -37,6 +37,10 @@ export interface DatosVehiculo {
 
 export interface ModeloVehiculo extends DatosVehiculo {
   id: string;
+  /** Foto del modelo (D-047); null si no tiene. */
+  fotoUrl: string | null;
+  fotoCredito: string | null;
+  fotoFuenteUrl: string | null;
 }
 
 export interface VehiculoUsuario extends ModeloVehiculo {

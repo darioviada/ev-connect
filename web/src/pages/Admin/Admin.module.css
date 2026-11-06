@@ -67,3 +67,37 @@
   margin: var(--espacio-4) 0 0;
   font-size: 1.15rem;
 }
+
+/* Catálogo con fotos (D-047) */
+.lista li.itemModelo {
+  flex-wrap: wrap;
+  justify-content: flex-start;
+}
+.textoModelo {
+  flex: 1;
+  min-width: 180px;
+}
+.fotoModelo {
+  order: 3;
+  flex-basis: 100%;
+  font-size: 0.9rem;
+}
+.fotoModelo summary {
+  cursor: pointer;
+  color: var(--color-primario-hover);
+}
+.formularioFoto {
+  display: grid;
+  gap: var(--espacio-3);
+  max-width: 520px;
+  padding: var(--espacio-3) 0;
+}
+.accionesFoto {
+  display: flex;
+  gap: var(--espacio-3);
+}
+.ayuda {
+  margin: 0;
+  color: var(--color-texto-secundario);
+  font-size: 0.85rem;
+}

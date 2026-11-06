@@ -29,19 +29,30 @@ export function registrarProveedorToken(fn: () => Promise<string | null>) {
 
 export async function api<T>(
   ruta: string,
-  opciones: { method?: string; body?: unknown; token?: string | null } = {},
+  opciones: {
+    method?: string;
+    body?: unknown;
+    /** Archivo enviado tal cual (p. ej. una imagen), con su tipo como Content-Type. */
+    archivo?: Blob;
+    token?: string | null;
+  } = {},
 ): Promise<T> {
   const token = opciones.token !== undefined ? opciones.token : await proveedorToken();
+  const cuerpo: { body?: BodyInit; tipo?: string } = opciones.archivo
+    ? { body: opciones.archivo, tipo: opciones.archivo.type }
+    : opciones.body !== undefined
+      ? { body: JSON.stringify(opciones.body), tipo: 'application/json' }
+      : {};
   let respuesta: Response;
   try {
     respuesta = await fetch(`${config.apiUrl}${ruta}`, {
       method: opciones.method ?? 'GET',
       headers: {
         Accept: 'application/json',
-        ...(opciones.body !== undefined ? { 'Content-Type': 'application/json' } : {}),
+        ...(cuerpo.tipo ? { 'Content-Type': cuerpo.tipo } : {}),
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
-      ...(opciones.body !== undefined ? { body: JSON.stringify(opciones.body) } : {}),
+      ...(cuerpo.body !== undefined ? { body: cuerpo.body } : {}),
     });
   } catch {
     throw new ApiError(
@@ -52,9 +63,9 @@ export async function api<T>(
   }
 
   if (respuesta.status === 204) return undefined as T;
-  const cuerpo = await respuesta.json().catch(() => null);
+  const datos = await respuesta.json().catch(() => null);
   if (!respuesta.ok) {
-    const e = cuerpo?.error;
+    const e = datos?.error;
     throw new ApiError(
       respuesta.status,
       e?.code ?? 'ERROR',
@@ -62,7 +73,7 @@ export async function api<T>(
       e?.details ?? {},
     );
   }
-  return cuerpo as T;
+  return datos as T;
 }
 
 /** Mensaje legible de un error de la API (incluye el primer problema de validación). */

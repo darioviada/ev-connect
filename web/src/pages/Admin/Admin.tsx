@@ -3,7 +3,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState, type FormEvent } from 'react';
 import { mensajeDeError } from '../../api/cliente';
 import { apiAdmin, apiCargadores } from '../../api/endpoints';
-import type { DatosVehiculo, Rol, TipoConector } from '../../api/tipos';
+import type { DatosVehiculo, ModeloVehiculo, Rol, TipoConector } from '../../api/tipos';
+import { FotoVehiculo } from '../../components/Vehiculo/FotoVehiculo';
 import { useSesion } from '../../auth/Sesion';
 import {
   Alerta,
@@ -191,6 +192,103 @@ const MODELO_VACIO = {
   potenciaMaxDcKw: '',
 };
 
+/** Subir, reemplazar o quitar la foto de un modelo (D-047). */
+function FotoModelo({ modelo, alCambiar }: { modelo: ModeloVehiculo; alCambiar: () => void }) {
+  const [archivo, setArchivo] = useState<File | null>(null);
+  const [credito, setCredito] = useState('');
+  const [fuente, setFuente] = useState('');
+  const nombre = `${modelo.marca} ${modelo.modelo}`;
+  const subir = useMutation({
+    mutationFn: () =>
+      apiAdmin.subirFotoModelo(
+        modelo.id,
+        archivo!,
+        credito.trim() || undefined,
+        fuente.trim() || undefined,
+      ),
+    onSuccess: () => {
+      setArchivo(null);
+      setCredito('');
+      setFuente('');
+      alCambiar();
+    },
+  });
+  const quitar = useMutation({
+    mutationFn: () => apiAdmin.eliminarFotoModelo(modelo.id),
+    onSuccess: alCambiar,
+  });
+
+  function enviar(e: FormEvent) {
+    e.preventDefault();
+    if (archivo) subir.mutate();
+  }
+
+  return (
+    <details className={s.fotoModelo}>
+      <summary>{modelo.fotoUrl ? 'Cambiar foto' : 'Agregar foto'}</summary>
+      <form className={s.formularioFoto} onSubmit={enviar}>
+        {modelo.fotoCredito && <p className={s.ayuda}>Actual: {modelo.fotoCredito}</p>}
+        <Campo etiqueta={`Imagen de ${nombre} (JPEG, PNG o WebP, hasta 2 MB)`}>
+          {(p) => (
+            <input
+              {...p}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              required
+              onChange={(e) => setArchivo(e.target.files?.[0] ?? null)}
+            />
+          )}
+        </Campo>
+        <Campo etiqueta="Crédito (autor y licencia)">
+          {(p) => (
+            <input
+              {...p}
+              className={claseControl}
+              maxLength={300}
+              placeholder="Foto: Autor · CC BY-SA 4.0 · Wikimedia Commons"
+              value={credito}
+              onChange={(e) => setCredito(e.target.value)}
+            />
+          )}
+        </Campo>
+        <Campo etiqueta="Enlace a la fuente (opcional)">
+          {(p) => (
+            <input
+              {...p}
+              className={claseControl}
+              type="url"
+              maxLength={500}
+              value={fuente}
+              onChange={(e) => setFuente(e.target.value)}
+            />
+          )}
+        </Campo>
+        <p className={s.ayuda}>Usá solo imágenes propias o con licencia que permita publicarlas.</p>
+        {(subir.isError || quitar.isError) && (
+          <Alerta>
+            <p>{mensajeDeError(subir.error ?? quitar.error)}</p>
+          </Alerta>
+        )}
+        <div className={s.accionesFoto}>
+          <Boton type="submit" chico cargando={subir.isPending} disabled={!archivo}>
+            Subir foto
+          </Boton>
+          {modelo.fotoUrl && (
+            <Boton
+              chico
+              variante="texto"
+              cargando={quitar.isPending}
+              onClick={() => window.confirm(`¿Quitar la foto de ${nombre}?`) && quitar.mutate()}
+            >
+              Quitar foto
+            </Boton>
+          )}
+        </div>
+      </form>
+    </details>
+  );
+}
+
 function Catalogo() {
   const queryClient = useQueryClient();
   const catalogo = useCatalogo();
@@ -249,13 +347,15 @@ function Catalogo() {
       )}
       <ul className={s.lista}>
         {catalogo.data?.map((x) => (
-          <li key={x.id}>
-            <span>
+          <li key={x.id} className={s.itemModelo}>
+            <FotoVehiculo vehiculo={x} tamano="miniatura" sinCredito />
+            <span className={s.textoModelo}>
               <strong>
                 {x.marca} {x.modelo}
               </strong>{' '}
               · {x.capacidadBateriaKwh} kWh · {nombreConector(x.tipoConector)}
             </span>
+            <FotoModelo modelo={x} alCambiar={refrescar} />
             <Boton
               chico
               variante="texto"

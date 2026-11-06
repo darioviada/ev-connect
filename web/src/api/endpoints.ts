@@ -120,4 +120,17 @@ export const apiAdmin = {
   crearModelo: (datos: DatosVehiculo) =>
     api<ModeloVehiculo>('/admin/vehiculos-modelo', { method: 'POST', body: datos }),
   eliminarModelo: (id: string) => api<void>(`/admin/vehiculos-modelo/${id}`, { method: 'DELETE' }),
+  /** Foto del modelo (D-047): JPEG, PNG o WebP de hasta 2 MB; crédito y fuente opcionales. */
+  subirFotoModelo: (id: string, archivo: File, credito?: string, fuenteUrl?: string) => {
+    const q = new URLSearchParams();
+    if (credito) q.set('credito', credito);
+    if (fuenteUrl) q.set('fuenteUrl', fuenteUrl);
+    const sufijo = q.size > 0 ? `?${q.toString()}` : '';
+    return api<ModeloVehiculo>(`/admin/vehiculos-modelo/${id}/foto${sufijo}`, {
+      method: 'PUT',
+      archivo,
+    });
+  },
+  eliminarFotoModelo: (id: string) =>
+    api<void>(`/admin/vehiculos-modelo/${id}/foto`, { method: 'DELETE' }),
 };

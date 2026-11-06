@@ -1,9 +1,10 @@
 // Home = buscador (HU-006 y HU-007): vehículo, ubicación o ruta, batería → urgencia y autonomía.
 import { useEffect, useId, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
-import type { DatosVehiculo, VehiculoBusqueda } from '../../api/tipos';
+import type { ModeloVehiculo, VehiculoBusqueda } from '../../api/tipos';
 import { useSesion } from '../../auth/Sesion';
 import { BateriaUrgencia } from '../../components/Buscador/BateriaUrgencia';
+import { FotoVehiculo } from '../../components/Vehiculo/FotoVehiculo';
 import {
   SelectorUbicacion,
   type UbicacionElegida,
@@ -68,9 +69,7 @@ export function Home() {
   // Con sesión y sin elección previa, se preselecciona el primer vehículo propio (o el primero del catálogo).
   const vehiculoActual =
     f.vehiculo || (propios[0] ? `u:${propios[0].id}` : modelos[0] ? `m:${modelos[0].id}` : '');
-  const datosVehiculo: (DatosVehiculo & { id: string }) | undefined = vehiculoActual.startsWith(
-    'u:',
-  )
+  const datosVehiculo: ModeloVehiculo | undefined = vehiculoActual.startsWith('u:')
     ? propios.find((v) => v.id === vehiculoActual.slice(2))
     : modelos.find((m) => m.id === vehiculoActual.slice(2));
 
@@ -153,6 +152,7 @@ export function Home() {
                 </p>
               )}
             </div>
+            {datosVehiculo?.fotoUrl && <FotoVehiculo vehiculo={datosVehiculo} tamano="mediana" />}
             {datosVehiculo && (
               <Chips
                 items={[

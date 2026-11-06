@@ -14,7 +14,6 @@ import {
   Chips,
   claseControl,
   EnlaceBoton,
-  Icono,
   Segmentado,
   TarjetaEnlace,
   Vacio,
@@ -22,6 +21,7 @@ import {
 import { CONECTORES_OPCIONES, kwh, nombreConector } from '../../dominio/formato';
 import { autonomiaKm } from '../../dominio/vehiculo';
 import { useCatalogo, useMisVehiculos } from '../../hooks/consultas';
+import { FotoVehiculo } from '../../components/Vehiculo/FotoVehiculo';
 import s from './Vehiculos.module.css';
 
 const chipsDe = (v: DatosVehiculo) => [
@@ -59,9 +59,7 @@ export function Vehiculos() {
           <li key={v.id}>
             <TarjetaEnlace a={`/vehiculos/${v.id}`}>
               <div className={s.fila}>
-                <span className={s.icono} aria-hidden="true">
-                  <Icono nombre="auto" tamano={26} />
-                </span>
+                <FotoVehiculo vehiculo={v} tamano="miniatura" sinCredito />
                 <div>
                   <h2 className={s.nombre}>
                     {v.marca} {v.modelo}
@@ -101,9 +99,7 @@ export function VehiculoDetalle() {
   return (
     <div className={s.detalle}>
       <Cabecera titulo="Detalle del vehículo" volver="/vehiculos" />
-      <div className={s.ilustracion} aria-hidden="true">
-        <Icono nombre="auto" tamano={96} />
-      </div>
+      <FotoVehiculo vehiculo={v} />
       <div className={s.tarjetaModelo}>
         <h2 className={s.nombre}>
           {v.marca} {v.modelo}
