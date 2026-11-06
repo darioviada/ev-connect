@@ -13,6 +13,15 @@ export const iconoCargador = (destacado: boolean) =>
     iconAnchor: destacado ? [22, 22] : [17, 17],
   });
 
+/** Parada siguiente de un plan de viaje, con su número de orden. */
+export const iconoParada = (numero: number) =>
+  L.divIcon({
+    className: '',
+    html: `<span class="${s.pin} ${s.pinParada}">${numero}</span>`,
+    iconSize: [34, 34],
+    iconAnchor: [17, 17],
+  });
+
 export const iconoPunto = (tipo: 'origen' | 'destino') =>
   L.divIcon({
     className: '',

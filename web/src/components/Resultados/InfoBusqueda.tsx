@@ -16,6 +16,8 @@ const MOTIVOS: Record<string, string> = {
   CONECTOR_INCOMPATIBLE: 'conector incompatible',
   FUERA_DE_AUTONOMIA: 'fuera de autonomía',
   SIN_DISPONIBILIDAD: 'sin disponibilidad',
+  VIAJE_NO_POSIBLE: 'desde acá no se completa el viaje',
+  CARGA_INNECESARIA: 'no hace falta cargar acá',
 };
 
 export function ResumenBusqueda({
@@ -46,6 +48,14 @@ export function ResumenBusqueda({
 export function AvisosBusqueda({ r }: { r: ResultadoRecomendacion }) {
   return (
     <>
+      {r.viaje?.llegaSinCargar && (
+        <Alerta tipo="exito">
+          <p>
+            Con la batería actual llegás al destino sin cargar ({km(r.viaje.distanciaKm)}). Igual te
+            mostramos cargadores en el camino.
+          </p>
+        </Alerta>
+      )}
       {r.advertencias.map((a) => (
         <Alerta key={a} tipo="aviso">
           <p>{a}</p>
@@ -57,8 +67,12 @@ export function AvisosBusqueda({ r }: { r: ResultadoRecomendacion }) {
 
 export function SinResultados({ r }: { r: ResultadoRecomendacion }) {
   if (!r.sinResultados) return null;
+  const titulo =
+    r.sinResultados.codigo === 'VIAJE_NO_POSIBLE'
+      ? 'Este viaje no es posible con tu vehículo'
+      : 'No encontramos cargadores para esta búsqueda';
   return (
-    <Vacio titulo="No encontramos cargadores para esta búsqueda" icono="rayo">
+    <Vacio titulo={titulo} icono="rayo">
       <p>{r.sinResultados.mensaje}</p>
       <EnlaceBoton a="/" variante="secundario">
         Cambiar la búsqueda

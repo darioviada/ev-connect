@@ -9,6 +9,7 @@ import {
   ResumenBusqueda,
   SinResultados,
 } from '../../components/Resultados/InfoBusqueda';
+import { PlanDeViaje } from '../../components/Resultados/PlanDeViaje';
 import { TarjetaRecomendacion } from '../../components/Resultados/TarjetaRecomendacion';
 import s from '../../components/Resultados/Resultados.module.css';
 import { Alerta, BotonIcono, Cabecera, Cargando, EnlaceBoton, Vacio } from '../../components/ui';
@@ -64,6 +65,13 @@ export function Resultados() {
           <AvisosBusqueda r={r} />
           <GuardarRuta busqueda={busqueda} />
           <SinResultados r={r} />
+          {r.recomendaciones[0] && (
+            <PlanDeViaje
+              rec={r.recomendaciones[0]}
+              busqueda={busqueda}
+              enlace={(id) => `/cargadores/${id}?b=${b}`}
+            />
+          )}
           {!r.sinResultados && (
             <ul className={s.lista} aria-label="Cargadores recomendados">
               {r.recomendaciones.map((rec) => (

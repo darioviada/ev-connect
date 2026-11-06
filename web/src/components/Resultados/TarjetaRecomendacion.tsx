@@ -20,12 +20,16 @@ export function TarjetaRecomendacion({
     modo === 'ruta' && m.desvioKm !== undefined
       ? `A ${km(m.distanciaKm)} · desvío ${km(m.desvioKm)}`
       : km(m.distanciaKm);
+  // Con plan de viaje, la tarjeta avisa cuántas paradas más hacen falta.
+  const extra = rec.plan ? rec.plan.paradas.length - 1 : 0;
+  const paradas = extra > 0 ? [`+${extra} parada${extra === 1 ? '' : 's'} en el viaje`] : [];
   const datos = compacta
     ? [
         distancia,
         nombreConector(rec.cargador.tipoConector),
         minutos(m.cargaMin),
         pesos(m.costoEstimado),
+        ...paradas,
       ]
     : [
         distancia,
@@ -34,6 +38,7 @@ export function TarjetaRecomendacion({
         disponibilidad(m.esperaMin),
         `${minutos(m.cargaMin)} de carga`,
         pesos(m.costoEstimado),
+        ...paradas,
       ];
 
   return (

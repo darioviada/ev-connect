@@ -4,7 +4,7 @@
 import { Marker } from 'react-leaflet';
 import { useNavigate, useSearchParams } from 'react-router';
 import { mensajeDeError } from '../../api/cliente';
-import { iconoCargador } from '../../components/Mapa/iconos';
+import { iconoCargador, iconoParada } from '../../components/Mapa/iconos';
 import {
   AjustarVista,
   LineaRuta,
@@ -19,6 +19,7 @@ import {
   ResumenBusqueda,
   SinResultados,
 } from '../../components/Resultados/InfoBusqueda';
+import { PlanDeViaje } from '../../components/Resultados/PlanDeViaje';
 import { TarjetaRecomendacion } from '../../components/Resultados/TarjetaRecomendacion';
 import s from '../../components/Resultados/Resultados.module.css';
 import { Alerta, BotonIcono, Cargando, EnlaceBoton, Vacio } from '../../components/ui';
@@ -45,10 +46,15 @@ export default function ResultadosMapa() {
     busqueda.modo === 'ruta'
       ? `${busqueda.origenNombre ?? 'Origen'} → ${busqueda.destinoNombre ?? 'Destino'}`
       : `Cerca de ${busqueda.origenNombre ?? 'tu ubicación'}`;
+  // Paradas siguientes del plan de la mejor opción (la primera es su propio pin)
+  const paradas = recs[0]?.plan?.factible ? recs[0].plan.paradas.slice(1) : [];
+  const enPlan = new Set(paradas.map((p) => p.cargador.id));
+  const enlace = (id: string) => `/cargadores/${id}?b=${b}`;
   const puntos = [
     busqueda.origen,
     ...(busqueda.destino && busqueda.modo === 'ruta' ? [busqueda.destino] : []),
     ...recs.map((x) => x.cargador.ubicacion),
+    ...paradas.map((p) => p.cargador.ubicacion),
   ];
 
   return (
@@ -81,17 +87,31 @@ export default function ResultadosMapa() {
             )}
           </>
         )}
-        {[...recs].reverse().map((rec) => (
+        {paradas.map((p, i) => (
           <Marker
-            key={rec.cargador.id}
-            position={[rec.cargador.ubicacion.lat, rec.cargador.ubicacion.lng]}
-            icon={iconoCargador(rec.mejorOpcion)}
-            title={rec.cargador.nombre}
-            alt={rec.cargador.nombre}
+            key={`parada-${p.cargador.id}`}
+            position={[p.cargador.ubicacion.lat, p.cargador.ubicacion.lng]}
+            icon={iconoParada(i + 2)}
+            title={`Parada ${i + 2}: ${p.cargador.nombre}`}
+            alt={`Parada ${i + 2}: ${p.cargador.nombre}`}
             keyboard
-            eventHandlers={{ click: () => navigate(`/cargadores/${rec.cargador.id}?b=${b}`) }}
+            eventHandlers={{ click: () => navigate(enlace(p.cargador.id)) }}
           />
         ))}
+        {[...recs]
+          .reverse()
+          .filter((rec) => !enPlan.has(rec.cargador.id))
+          .map((rec) => (
+            <Marker
+              key={rec.cargador.id}
+              position={[rec.cargador.ubicacion.lat, rec.cargador.ubicacion.lng]}
+              icon={iconoCargador(rec.mejorOpcion)}
+              title={rec.cargador.nombre}
+              alt={rec.cargador.nombre}
+              keyboard
+              eventHandlers={{ click: () => navigate(enlace(rec.cargador.id)) }}
+            />
+          ))}
       </MapaBase>
 
       <section className={s.hoja} aria-label="Resultados de la búsqueda">
@@ -115,6 +135,7 @@ export default function ResultadosMapa() {
             )}
             <GuardarRuta busqueda={busqueda} />
             <SinResultados r={r} />
+            {recs[0] && <PlanDeViaje rec={recs[0]} busqueda={busqueda} enlace={enlace} />}
           </>
         )}
         {recs.length > 0 && (

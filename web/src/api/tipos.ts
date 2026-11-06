@@ -106,6 +106,41 @@ export interface Recomendacion {
   desglose: Record<Criterio, { valor: number; normalizado: number; peso: number; aporte: number }>;
   mejorOpcion: boolean;
   advertencias: string[];
+  /** Modo ruta, cuando no se llega al destino sin cargar: plan completo desde esta parada (D-045). */
+  plan?: PlanViaje;
+}
+
+export interface ParadaPlan {
+  cargador: Recomendacion['cargador'];
+  kmEnRuta: number;
+  tramoKm: number;
+  tramoEstimado: boolean;
+  socLlegadaPct: number;
+  objetivoPct: number;
+  energiaKwh: number;
+  cargaMin: number;
+  esperaMin: number;
+  esperaPorHorario: boolean;
+  esperaPorReserva: boolean;
+  costoEstimado: number;
+  potenciaEfectivaKw: number;
+  horarioCarga: { fecha: string; horaInicio: string; horaFin: string };
+}
+
+export interface PlanViaje {
+  factible: boolean;
+  paradas: ParadaPlan[];
+  llegada: { tramoKm: number; socPct: number; fecha: string; hora: string } | null;
+  totales: {
+    distanciaKm: number;
+    viajeMin: number;
+    esperaMin: number;
+    cargaMin: number;
+    totalMin: number;
+    energiaKwh: number;
+    costoEstimado: number;
+  };
+  problema: { motivo: string; mensaje: string } | null;
 }
 
 export type VehiculoBusqueda =
@@ -124,6 +159,8 @@ export interface ResultadoRecomendacion {
   autonomiaActualKm: number;
   pesos: Record<Criterio, number>;
   estrategia: string;
+  /** Solo modo ruta. */
+  viaje?: { distanciaKm: number; llegaSinCargar: boolean; alcanceConCargaCompletaKm: number };
   recomendaciones: Recomendacion[];
   descartados: { cargadorId: string; nombre: string; motivo: string; detalle: string }[];
   sinResultados: { codigo: string; mensaje: string } | null;
@@ -142,6 +179,7 @@ export interface ResultadoRecomendacion {
   advertencias: string[];
   meta: {
     candidatosEvaluados: number;
+    cargadoresDelViaje: number;
     distanciaPreseleccionKm: number;
     preseleccionAmpliada: boolean;
     elementosConsultados: number;

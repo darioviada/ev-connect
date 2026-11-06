@@ -27,6 +27,12 @@
   background: var(--color-primario);
   color: var(--color-superficie);
 }
+.pinParada {
+  border-color: var(--color-texto);
+  color: var(--color-texto);
+  font-family: var(--fuente-titulos);
+  font-weight: 700;
+}
 .origen,
 .destino {
   display: block;

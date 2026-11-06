@@ -63,6 +63,10 @@ export function DetalleCargador() {
   const busqueda = decodificarBusqueda(b);
   const recs = useRecomendaciones(busqueda);
   const rec = recs.data?.recomendaciones.find((r) => r.cargador.id === id);
+  // Si es una parada siguiente de un plan de viaje (D-045), se precarga su horario de carga.
+  const parada = recs.data?.recomendaciones
+    .flatMap((r) => r.plan?.paradas ?? [])
+    .find((p) => p.cargador.id === id);
   const detalle = useQuery({
     queryKey: ['cargador', id],
     queryFn: () => apiCargadores.detalle(id),
@@ -169,7 +173,11 @@ export function DetalleCargador() {
         </div>
 
         <div className={s.columna}>
-          <FormularioReserva cargadorId={c.id} privado={c.tipo === 'privado'} rec={rec} />
+          <FormularioReserva
+            cargadorId={c.id}
+            privado={c.tipo === 'privado'}
+            horario={rec?.metricas.horarioCarga ?? parada?.horarioCarga}
+          />
           <Suspense fallback={null}>
             <MapaCargador posicion={c.ubicacion} />
           </Suspense>
@@ -187,6 +195,9 @@ function PorQue({ rec }: { rec: Recomendacion }) {
         Puntaje <strong>{Math.round(rec.score)}/100</strong>. Cada criterio suma puntos según su
         peso (que depende de tu urgencia) y de qué tan bien queda este cargador frente a los demás
         candidatos.
+        {rec.plan &&
+          rec.plan.paradas.length > 1 &&
+          ' En un viaje con paradas, la espera, el tiempo de carga y el costo se cuentan para el viaje completo.'}
       </p>
       <ul className={s.barras}>
         {CRITERIOS.map(({ clave, nombre, unidad }) => {
@@ -230,16 +241,17 @@ function PorQue({ rec }: { rec: Recomendacion }) {
 function FormularioReserva({
   cargadorId,
   privado,
-  rec,
+  horario,
 }: {
   cargadorId: string;
   privado: boolean;
-  rec: Recomendacion | undefined;
+  /** Ventana sugerida por la recomendación o por el plan de viaje. */
+  horario: { fecha: string; horaInicio: string; horaFin: string } | undefined;
 }) {
   const { perfil } = useSesion();
   const ubicacion = useLocation();
   const queryClient = useQueryClient();
-  const inicial = rec?.metricas.horarioCarga ?? horarioPorDefecto();
+  const inicial = horario ?? horarioPorDefecto();
   const [fecha, setFecha] = useState(inicial.fecha);
   const [horaInicio, setHoraInicio] = useState(inicial.horaInicio);
   const [horaFin, setHoraFin] = useState(inicial.horaFin);
@@ -297,7 +309,7 @@ function FormularioReserva({
       <h2 id="titulo-reserva" className={s.subtitulo}>
         Horario de reserva
       </h2>
-      {rec && (
+      {horario && (
         <p className={s.texto}>
           Precargado con la hora estimada de llegada y la duración de la carga.
         </p>
