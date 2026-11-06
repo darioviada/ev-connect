@@ -21,6 +21,13 @@ import {
 import { resumir } from '../src/validacion/analisis.js';
 import { ejecutarValidacion } from '../src/validacion/ejecutar.js';
 import { FECHA_BASE } from '../src/validacion/escenarios.js';
+import { cargarCatalogo } from '../src/validacion/ejecutar.js';
+import {
+  ejecutarViajes,
+  generarViajes,
+  resumirViajes,
+  viajesACsv,
+} from '../src/validacion/viajes.js';
 import { aCsv, aMarkdown } from '../src/validacion/informe.js';
 
 const SALIDA = path.resolve(fileURLToPath(new URL('.', import.meta.url)), '../../docs/validacion');
@@ -31,6 +38,7 @@ async function main() {
       scenarios: { type: 'string', default: '200' },
       seed: { type: 'string', default: '42' },
       'proporcion-ruta': { type: 'string', default: '0.2' },
+      viajes: { type: 'string', default: '60' },
       proveedor: { type: 'string', default: 'offline' },
       'confirmar-costo': { type: 'boolean', default: false },
     },
@@ -43,6 +51,9 @@ async function main() {
   if (!Number.isInteger(semilla)) throw new Error('--seed debe ser un entero');
   if (!(proporcionRuta >= 0 && proporcionRuta <= 1))
     throw new Error('--proporcion-ruta debe estar entre 0 y 1');
+  const cantidadViajes = Number(values.viajes);
+  if (!Number.isInteger(cantidadViajes) || cantidadViajes < 0 || cantidadViajes > 1000)
+    throw new Error('--viajes debe ser un entero entre 0 y 1000');
 
   const config = cargarConfig();
   const url =
@@ -96,8 +107,25 @@ async function main() {
       },
     });
 
+    // Viajes largos con paradas (D-045)
+    const viajes =
+      cantidadViajes > 0
+        ? await ejecutarViajes(
+            { db, rutas, engine: config.engine },
+            config.tz,
+            generarViajes({
+              semilla,
+              cantidad: cantidadViajes,
+              catalogo: await cargarCatalogo(db),
+            }),
+          )
+        : [];
+
     await mkdir(SALIDA, { recursive: true });
     await writeFile(path.join(SALIDA, 'resultados.csv'), aCsv(r.filas), 'utf8');
+    if (viajes.length > 0) {
+      await writeFile(path.join(SALIDA, 'resultados-viajes.csv'), viajesACsv(viajes), 'utf8');
+    }
     await writeFile(
       path.join(SALIDA, 'resultados.md'),
       aMarkdown(r.filas, {
@@ -111,6 +139,7 @@ async function main() {
         radioKm: config.engine.searchRadiusKm,
         corredorKm: config.engine.corridorKm,
         elementosConsultados: r.elementosConsultados,
+        viajes,
       }),
       'utf8',
     );
@@ -132,6 +161,12 @@ async function main() {
     console.log(
       `  elige distinto que la base: ${f(s.distintoDeBasePct)} % · igual al óptimo: ${f(s.igualAlOptimoPct)} % · optimalidad promedio: ${f(s.optimalidad.promedio)} %`,
     );
+    if (viajes.length > 0) {
+      const v = resumirViajes('Todos', viajes);
+      console.log(
+        `  viajes largos: ${v.escenarios} · posibles ${v.posiblesSistema} (todos los cargadores: ${v.posiblesCompleto}) · paradas ${f(v.paradasPromedio)} · tiempo total sistema ${f(v.totalMinSistema)} min vs base ${f(v.totalMinBase)} (mejora ${f(v.mejoraVsBasePct)} %) · sobre el mínimo ${f(v.sobreMinimoPct)} %`,
+      );
+    }
     console.log(
       `\nArchivos: ${path.relative(process.cwd(), path.join(SALIDA, 'resultados.md'))} y resultados.csv`,
     );

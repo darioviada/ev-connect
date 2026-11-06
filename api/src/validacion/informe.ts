@@ -1,6 +1,7 @@
 // Salidas de la validación: CSV (una fila por escenario) y Markdown (resumen, método y limitaciones).
 // Los números salen tal cual del cálculo: no se redondea a favor ni se descartan escenarios.
 import { resumir, type FilaEscenario, type Metrica, type Resumen } from './analisis.js';
+import { DESTINOS_LARGOS, resumirViajes, type FilaViaje } from './viajes.js';
 
 const COLUMNAS_ELECCION = [
   'id',
@@ -134,6 +135,48 @@ export interface ParametrosInforme {
   radioKm: number;
   corredorKm: number;
   elementosConsultados: number;
+  /** Viajes largos con paradas (D-045); vacío si no se corrieron. */
+  viajes: readonly FilaViaje[];
+}
+
+/** Sección de viajes largos (D-045). */
+function seccionViajes(filas: readonly FilaViaje[]): string {
+  if (filas.length === 0) return '';
+  const grupos = [
+    resumirViajes('Todos', filas),
+    ...DESTINOS_LARGOS.map((d) =>
+      resumirViajes(
+        d.nombre,
+        filas.filter((f) => f.destino === d.nombre),
+      ),
+    ),
+  ];
+  const motivos = new Map<string, number>();
+  for (const f of filas) {
+    if (f.sinSolucionCompleto)
+      motivos.set(f.sinSolucionCompleto, (motivos.get(f.sinSolucionCompleto) ?? 0) + 1);
+  }
+  const min = (x: number) => (Number.isFinite(x) ? num(x, 0) : '—');
+  const filasTabla = grupos.map(
+    (g) =>
+      `| ${g.grupo} | ${g.escenarios} | ${g.posiblesSistema} / ${g.posiblesCompleto} | ${num(g.paradasPromedio)} | ${min(g.totalMinSistema)} / ${min(g.totalMinBase)} (${signo(g.mejoraVsBasePct)}) | ${min(g.totalMinMinimo)} | ${num(g.sobreMinimoPct)} % (mediana ${num(g.sobreMinimoMediana)} %) |`,
+  );
+  return `
+## Viajes largos con paradas (D-045)
+
+- **Escenarios:** ${filas.length}, aparte de los anteriores, generados con la misma semilla. Origen al azar en Córdoba capital; destino Rosario, Buenos Aires o Mendoza (en rotación); vehículo al azar del catálogo; batería de 20 a 100 %; salida de día (6 a 18 h) dentro de la misma semana. Entre Córdoba y Mendoza el seed no tiene cargadores a propósito.
+- **Sistema:** el mismo camino que la API: primeras paradas preseleccionadas y, para cada una, el plan de viaje (Dijkstra por hora de llegada). Se toma el primer recomendado y su plan.
+- **Línea base:** entre todas las primeras paradas posibles (todos los cargadores activos), la de menor desvío, completada con el mismo planificador. Representa a quien carga "lo más en el camino posible".
+- **Mínimo:** el plan de menor tiempo total entre todas las primeras paradas posibles (fuerza bruta). El sistema no minimiza solo el tiempo (pondera también desvío y costo según la urgencia), así que puede quedar por encima.
+- **Tiempo total:** manejo + esperas + cargas hasta el destino. Los tramos entre paradas se estiman (línea recta × factor de circuito del trayecto directo).
+- **Sin solución** evaluando todos los cargadores: **${filas.filter((f) => f.sinSolucionCompleto).length}**${motivos.size ? ` (${[...motivos].map(([m, n]) => `${m}: ${n}`).join(', ')})` : ''}.
+
+| Destino | Escenarios | Viaje posible: sistema / todos | Paradas (prom.) | Tiempo total, min: sistema / base (mejora) | Mínimo posible, min | Sistema sobre el mínimo |
+|---|---:|---:|---:|---:|---:|---:|
+${filasTabla.join('\n')}
+
+Detalle por escenario en \`resultados-viajes.csv\`.
+`;
 }
 
 export function aMarkdown(filas: readonly FilaEscenario[], p: ParametrosInforme): string {
@@ -165,7 +208,7 @@ export function aMarkdown(filas: readonly FilaEscenario[], p: ParametrosInforme)
 - **Línea base ("selección manual simulada"):** entre **todos** los cargadores activos (${p.cargadoresActivos}) que son compatibles, alcanzables y están disponibles, el más cercano (en modo ruta, el de menor desvío). Es lo que haría una persona mirando un mapa. Se le supone información perfecta de compatibilidad y disponibilidad, un supuesto favorable a la base.
 - **Óptimo:** el mejor puntaje del motor evaluando todos los cargadores activos por fuerza bruta, sin preselección.
 - **Grado de optimalidad:** puntaje del cargador elegido por el sistema dividido el puntaje del óptimo, **ambos calculados en el conjunto completo**. Los puntajes min–max solo se pueden comparar dentro de un mismo conjunto. Mide cuánto se pierde por evaluar solo los candidatos preseleccionados.
-- **Métricas** del cargador elegido: distancia al cargador, espera, tiempo de carga, tiempo total (viaje + espera + carga) y costo estimado. **Mejora del sistema** = (base − sistema) / base sobre los promedios: un valor positivo significa que el sistema es mejor (menor), uno negativo que es peor.
+- **Métricas** del cargador elegido: distancia al cargador, espera, tiempo de carga, tiempo total (viaje + espera + carga) y costo estimado. En modo ruta, cuando con la batería actual no se llega al destino, espera, carga, tiempo total y costo son los del **viaje completo** (plan de viaje, D-045), que es lo que puntúa el motor. **Mejora del sistema** = (base − sistema) / base sobre los promedios: un valor positivo significa que el sistema es mejor (menor), uno negativo que es peor.
 
 ## Resultados
 
@@ -188,6 +231,7 @@ ${tablaPorGrupo('Grupo', porUrgencia)}
 
 ${tablaPorGrupo('Grupo', porModo)}
 
+${seccionViajes(p.viajes)}
 ## Lectura de los resultados
 
 - **Cercanía:** por definición, la línea base elige el cargador factible más cercano (en modo ruta, el de menor desvío), así que el sistema no puede mejorarla en cercanía. Lo esperable es ceder cercanía a cambio de mejores tiempos o costos. La tabla muestra cuánto se cede.
@@ -197,9 +241,9 @@ ${tablaPorGrupo('Grupo', porModo)}
 
 ## Limitaciones
 
-- **Datos:** 60 cargadores con precios, horarios y reservas ficticios en Córdoba y los dos corredores. Las especificaciones de los vehículos son aproximadas.
-- **Rutas:** ${p.proveedor === 'offline' ? 'proveedor **offline** (distancia en línea recta × 1.35 y velocidades medias por tramo), sin tráfico ni recorridos reales' : 'proveedor **Google Routes** sin tráfico (TRAFFIC_UNAWARE)'}. Elementos consultados a servicios externos en esta corrida: ${p.elementosConsultados}.
-- **Modelo:** carga lineal sin curva de potencia, ocupación solo por reservas (sin datos en tiempo real), espera máxima de 2 h, una sola parada (sin planificación de varias cargas) y alcance evaluado solo hasta el cargador.
+- **Datos:** ${p.cargadoresActivos} cargadores activos con precios, horarios y reservas ficticios en Córdoba, los corredores a Villa Carlos Paz y Alta Gracia y la RN 9 a Buenos Aires. Las especificaciones de los vehículos son aproximadas.
+- **Rutas:** ${p.proveedor === 'offline' ? 'proveedor **offline** (distancia en línea recta × 1.35, menos en tramos de más de 50 km, y velocidades medias por tramo), sin tráfico ni recorridos reales' : 'proveedor **Google Routes** sin tráfico (TRAFFIC_UNAWARE)'}. Elementos consultados a servicios externos en esta corrida: ${p.elementosConsultados}.
+- **Modelo:** carga lineal sin curva de potencia, ocupación solo por reservas (sin datos en tiempo real), espera máxima de 2 h. Los planes de viaje (D-045) estiman los tramos entre paradas y minimizan el tiempo de llegada, no el costo.
 - **Umbrales:** los rangos mínimos de normalización (D-026) y los pesos por urgencia son valores de diseño, no calibrados con usuarios.
 - **Línea base:** es una simplificación de la búsqueda manual. Una persona real no conoce toda la disponibilidad ni evalúa todos los cargadores.
 - **Muestra:** los escenarios son una muestra aleatoria con semilla fija. Con otra semilla los números cambian; conviene informar la semilla y la cantidad junto con cada resultado.

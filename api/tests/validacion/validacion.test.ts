@@ -21,6 +21,7 @@ import {
   type ModeloCatalogo,
 } from '../../src/validacion/escenarios.js';
 import { aCsv, aMarkdown } from '../../src/validacion/informe.js';
+import { ejecutarViajes, generarViajes, viajesACsv } from '../../src/validacion/viajes.js';
 import { prepararBaseDePrueba } from '../db/baseDePrueba.js';
 import { candidato, cargador, entrada, VEHICULO_CCS } from '../engine/fixtures.js';
 import { configDePrueba } from '../helpers.js';
@@ -207,8 +208,49 @@ describe('ejecución completa sobre la base (invariantes)', () => {
       radioKm: 20,
       corredorKm: 5,
       elementosConsultados: 0,
+      viajes: [],
     });
     expect(md).toContain('## Limitaciones');
     expect(md).toContain('Cercanía');
+  });
+
+  it('viajes largos (D-045): Mendoza no es posible y el sistema nunca baja del mínimo por fuerza bruta', async () => {
+    const viajes = await ejecutarViajes(
+      { db, rutas: new OfflineProvider(), engine: configDePrueba().engine },
+      'America/Argentina/Cordoba',
+      generarViajes({ semilla: 7, cantidad: 6, catalogo: await cargarCatalogo(db) }),
+    );
+    expect(viajes.map((v) => v.destino)).toEqual([
+      'Rosario',
+      'Buenos Aires',
+      'Mendoza',
+      'Rosario',
+      'Buenos Aires',
+      'Mendoza',
+    ]);
+    for (const v of viajes) {
+      if (v.destino === 'Mendoza') expect(v.sinSolucionCompleto).toBe('VIAJE_NO_POSIBLE');
+      if (v.sinSolucionCompleto) expect(v.totalMinSistema).toBeNull();
+      if (v.totalMinSistema !== null && v.totalMinMinimo !== null) {
+        expect(v.totalMinSistema).toBeGreaterThanOrEqual(v.totalMinMinimo - 1e-9);
+      }
+    }
+    expect(viajes.some((v) => v.paradasSistema !== null && v.paradasSistema >= 2)).toBe(true);
+    const md = aMarkdown([], {
+      cantidad: 0,
+      semilla: 7,
+      proporcionRuta: 0,
+      proveedor: 'offline',
+      fechaBase: FECHA_BASE,
+      cargadoresActivos: 70,
+      candidatosLimite: 8,
+      radioKm: 20,
+      corredorKm: 5,
+      elementosConsultados: 0,
+      viajes,
+    });
+    expect(md).toContain('## Viajes largos con paradas (D-045)');
+    // encabezado + una fila por viaje + línea final vacía
+    expect(viajesACsv(viajes).split('\n')).toHaveLength(viajes.length + 2);
   });
 });

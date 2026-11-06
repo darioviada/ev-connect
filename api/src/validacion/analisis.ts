@@ -72,17 +72,20 @@ function aEleccion(
   modo: Escenario['modo'],
 ): Eleccion {
   const enCompleto = completo.get(rec.cargador.id);
-  const m = (enCompleto ?? rec).metricas;
+  const elegido = enCompleto ?? rec;
+  const m = elegido.metricas;
+  // Con plan de viaje (D-045), espera, carga, tiempo total y costo son los del viaje completo.
+  const t = elegido.plan?.totales;
   return {
     id: rec.cargador.id,
     nombre: rec.cargador.nombre,
     criterioKm: modo === 'ruta' ? (m.desvioKm ?? m.distanciaKm) : m.distanciaKm,
     distanciaKm: m.distanciaKm,
     desvioKm: m.desvioKm ?? null,
-    esperaMin: m.esperaMin,
-    cargaMin: m.cargaMin,
-    totalMin: m.totalMin,
-    costo: m.costoEstimado,
+    esperaMin: t?.esperaMin ?? m.esperaMin,
+    cargaMin: t?.cargaMin ?? m.cargaMin,
+    totalMin: t?.totalMin ?? m.totalMin,
+    costo: t?.costoEstimado ?? m.costoEstimado,
     scoreConjuntoCompleto: enCompleto?.score ?? Number.NaN,
   };
 }
