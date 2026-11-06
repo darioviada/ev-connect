@@ -1,0 +1,61 @@
+id,vehiculo,conector,bateriaPct,destino,distanciaKm,llegaSinCargar,sinSolucionSistema,sinSolucionCompleto,paradasSistema,totalMinSistema,costoSistema,totalMinBase,totalMinMinimo
+1,Nissan Leaf,CHADEMO,36,Rosario,441.5,false,VIAJE_NO_POSIBLE,VIAJE_NO_POSIBLE,,,,,
+2,BYD Yuan Plus,CCS_COMBO,44,Buenos Aires,745.5,false,,,3,619.6,81668,619.6,619.6
+3,BYD Seal,CCS_COMBO,23,Mendoza,529.7,false,VIAJE_NO_POSIBLE,VIAJE_NO_POSIBLE,,,,,
+4,BYD Yuan Plus,CCS_COMBO,81,Rosario,437,false,,,2,359.9,24044,359.9,357.7
+5,Renault Kwid E-Tech,CCS_COMBO,100,Buenos Aires,742.5,false,,,5,722.9,52342,718.7,718.7
+6,BYD Seal,CCS_COMBO,45,Mendoza,541.6,false,VIAJE_NO_POSIBLE,VIAJE_NO_POSIBLE,,,,,
+7,Nissan Leaf,CHADEMO,28,Rosario,427.2,false,VIAJE_NO_POSIBLE,VIAJE_NO_POSIBLE,,,,,
+8,BYD Dolphin Mini,CCS_COMBO,97,Buenos Aires,744.4,false,,,3,673.4,50436,673.4,673.4
+9,Nissan Leaf,CHADEMO,61,Mendoza,536.8,false,VIAJE_NO_POSIBLE,VIAJE_NO_POSIBLE,,,,,
+10,Volvo EX30,CCS_COMBO,64,Rosario,428.7,false,,,2,343.2,34913,343.2,343.2
+11,Nissan Leaf,CHADEMO,97,Buenos Aires,739.4,false,VIAJE_NO_POSIBLE,VIAJE_NO_POSIBLE,,,,,
+12,BYD Seal,CCS_COMBO,83,Mendoza,536.7,false,VIAJE_NO_POSIBLE,VIAJE_NO_POSIBLE,,,,,
+13,BYD Dolphin Mini,CCS_COMBO,84,Rosario,436.3,false,,,2,402.5,24211,504.4,402.5
+14,BYD Dolphin Mini,CCS_COMBO,34,Buenos Aires,751.4,false,,,4,707.5,69682,839,699.6
+15,Peugeot e-208,CCS_COMBO,82,Mendoza,543.7,false,VIAJE_NO_POSIBLE,VIAJE_NO_POSIBLE,,,,,
+16,Nissan Leaf,CHADEMO,47,Rosario,437.3,false,VIAJE_NO_POSIBLE,VIAJE_NO_POSIBLE,,,,,
+17,Volvo EX30,CCS_COMBO,78,Buenos Aires,745.4,false,,,3,582.9,69708,582.9,582.9
+18,BYD Yuan Plus,CCS_COMBO,83,Mendoza,531.7,false,VIAJE_NO_POSIBLE,VIAJE_NO_POSIBLE,,,,,
+19,Renault Kwid E-Tech,CCS_COMBO,61,Rosario,430.3,false,,,3,438,36706,438,438
+20,Modelo ficticio Urbano T2 (ficticio),TIPO_2,62,Buenos Aires,737.6,false,SIN_DISPONIBILIDAD,SIN_DISPONIBILIDAD,,,,,
+21,Volvo EX30,CCS_COMBO,33,Mendoza,541.4,false,VIAJE_NO_POSIBLE,VIAJE_NO_POSIBLE,,,,,
+22,Peugeot e-208,CCS_COMBO,20,Rosario,435.4,false,,,2,376.2,51828,376.1,376.1
+23,Peugeot e-208,CCS_COMBO,88,Buenos Aires,743.1,false,,,3,588.6,66466,588.6,588.6
+24,Volvo EX30,CCS_COMBO,24,Mendoza,541.4,false,VIAJE_NO_POSIBLE,VIAJE_NO_POSIBLE,,,,,
+25,Modelo ficticio Urbano T2 (ficticio),TIPO_2,67,Rosario,436.2,false,,,3,688.9,16966,717,688.9
+26,BYD Dolphin Mini,CCS_COMBO,71,Buenos Aires,738.5,false,,,4,670.9,57425,670.9,670.9
+27,Volvo EX30,CCS_COMBO,56,Mendoza,537.5,false,VIAJE_NO_POSIBLE,VIAJE_NO_POSIBLE,,,,,
+28,Nissan Leaf,CHADEMO,54,Rosario,433.5,false,VIAJE_NO_POSIBLE,VIAJE_NO_POSIBLE,,,,,
+29,Peugeot e-208,CCS_COMBO,72,Buenos Aires,741.5,false,,,3,587.8,72879,587.8,587.8
+30,Modelo ficticio Urbano T2 (ficticio),TIPO_2,82,Mendoza,535.8,false,VIAJE_NO_POSIBLE,VIAJE_NO_POSIBLE,,,,,
+31,Peugeot e-208,CCS_COMBO,45,Rosario,437.5,false,,,2,483.1,35947,482.8,371
+32,Peugeot e-208,CCS_COMBO,41,Buenos Aires,749.5,false,,,4,643.5,81623,643.5,627
+33,BYD Yuan Plus,CCS_COMBO,65,Mendoza,532.4,false,VIAJE_NO_POSIBLE,VIAJE_NO_POSIBLE,,,,,
+34,Renault Kwid E-Tech,CCS_COMBO,61,Rosario,425.3,false,,,3,500.4,31033,500.4,436.9
+35,Modelo ficticio Urbano T2 (ficticio),TIPO_2,78,Buenos Aires,743.6,false,VIAJE_NO_POSIBLE,VIAJE_NO_POSIBLE,,,,,
+36,Nissan Leaf,CHADEMO,53,Mendoza,535.8,false,VIAJE_NO_POSIBLE,VIAJE_NO_POSIBLE,,,,,
+37,Nissan Leaf,CHADEMO,40,Rosario,432.3,false,VIAJE_NO_POSIBLE,VIAJE_NO_POSIBLE,,,,,
+38,BYD Dolphin Mini,CCS_COMBO,21,Buenos Aires,749,false,,,4,710.7,73281,880.6,710
+39,BYD Dolphin Mini,CCS_COMBO,40,Mendoza,542.8,false,VIAJE_NO_POSIBLE,VIAJE_NO_POSIBLE,,,,,
+40,Nissan Leaf,CHADEMO,42,Rosario,438.4,false,VIAJE_NO_POSIBLE,VIAJE_NO_POSIBLE,,,,,
+41,Renault Kwid E-Tech,CCS_COMBO,74,Buenos Aires,744.3,false,,,6,780.5,58859,780.7,730.6
+42,Volvo EX30,CCS_COMBO,77,Mendoza,544.9,false,VIAJE_NO_POSIBLE,VIAJE_NO_POSIBLE,,,,,
+43,Volvo EX30,CCS_COMBO,58,Rosario,435.4,false,,,2,352.8,39055,382,352.8
+44,Peugeot e-208,CCS_COMBO,37,Buenos Aires,750.2,false,,,3,613,88923,759.4,613
+45,BYD Dolphin Mini,CCS_COMBO,50,Mendoza,531.8,false,VIAJE_NO_POSIBLE,VIAJE_NO_POSIBLE,,,,,
+46,BYD Yuan Plus,CCS_COMBO,73,Rosario,431.7,false,,,2,352.3,27155,352.3,352.3
+47,Modelo ficticio Urbano T2 (ficticio),TIPO_2,39,Buenos Aires,755,false,VIAJE_NO_POSIBLE,VIAJE_NO_POSIBLE,,,,,
+48,BYD Dolphin Mini,CCS_COMBO,20,Mendoza,542.5,false,VIAJE_NO_POSIBLE,VIAJE_NO_POSIBLE,,,,,
+49,Peugeot e-208,CCS_COMBO,98,Rosario,441.8,false,,,1,371.2,21732,354.9,354.9
+50,Peugeot e-208,CCS_COMBO,65,Buenos Aires,752.2,false,,,3,607.9,77383,640.4,607.9
+51,Renault Kwid E-Tech,CCS_COMBO,49,Mendoza,534.7,false,VIAJE_NO_POSIBLE,VIAJE_NO_POSIBLE,,,,,
+52,BYD Seal,CCS_COMBO,31,Rosario,434.7,false,,,1,360.1,42837,463.4,349.7
+53,Renault Kwid E-Tech,CCS_COMBO,69,Buenos Aires,749.9,false,,,6,733.4,59295,789.4,731.7
+54,Volvo EX30,CCS_COMBO,49,Mendoza,533.7,false,VIAJE_NO_POSIBLE,VIAJE_NO_POSIBLE,,,,,
+55,BYD Dolphin Mini,CCS_COMBO,75,Rosario,438.6,false,,,3,400,27225,517.2,397.5
+56,BYD Dolphin Mini,CCS_COMBO,20,Buenos Aires,741.9,false,,,4,886.1,62916,886.1,711.8
+57,BYD Yuan Plus,CCS_COMBO,80,Mendoza,528.3,false,VIAJE_NO_POSIBLE,VIAJE_NO_POSIBLE,,,,,
+58,BYD Dolphin Mini,CCS_COMBO,26,Rosario,431.4,false,,,3,425,41171,606.4,424.4
+59,BYD Yuan Plus,CCS_COMBO,29,Buenos Aires,743.4,false,,,3,628.1,91143,628.1,628.1
+60,Volvo EX30,CCS_COMBO,20,Mendoza,540.9,false,VIAJE_NO_POSIBLE,VIAJE_NO_POSIBLE,,,,,

@@ -40,6 +40,7 @@ buscar sin iniciar sesión.
 
 - **Búsqueda** por ubicación (GPS, dirección o clic en el mapa) o por ruta (origen y destino), con un vehículo del catálogo, uno guardado o uno propio. La batería define la urgencia y la autonomía actual.
 - **Recomendaciones** ordenadas, en lista y en mapa (Leaflet + OpenStreetMap), con "¿Por qué lo recomendamos?" (aporte de cada criterio al puntaje). Con Google Routes se dibuja el recorrido real por calles.
+- **Viajes largos** (modo ruta): si con la batería no se llega al destino, cada opción trae su **plan de viaje** con las paradas siguientes y cuánto cargar en cada una. Si no hay forma de completar el viaje, se avisa y se indica dónde se corta. Para probarlo: Córdoba → Buenos Aires (cargadores sintéticos sobre la RN 9) y Córdoba → Mendoza (sin cargadores en el medio).
 - **Reservas** sin solapamientos (409), dentro del horario del cargador. En cargadores privados quedan pendientes hasta que el dueño las acepta.
 - **Red colaborativa:** publicar y administrar cargadores propios (ubicación, conector, potencia, precio y franjas horarias).
 - **Mis vehículos**, favoritos y rutas guardadas. **Administración** de usuarios, cargadores y catálogo.
@@ -50,7 +51,7 @@ buscar sin iniciar sesión.
 ```
 Navegador ─► web (React + Vite) ─► API (Express + TypeScript) ─► PostgreSQL 16 + PostGIS
                                      ├─ AuthProvider:    local (JWT HS256) | cognito (aws-jwt-verify)
-                                     ├─ RoutingProvider: offline (Haversine × 1.35) | google (Routes API, con caché)
+                                     ├─ RoutingProvider: offline (Haversine × factor de circuito) | google (Routes API, con caché)
                                      └─ motor de recomendación (puro, sin E/S): api/src/engine
 ```
 
@@ -62,7 +63,8 @@ AWS (ECS Fargate, RDS, Cognito) está documentado en [docs/AWS_DEPLOY.md](docs/A
 1. **Preselección espacial (SQL):** hasta 8 cargadores activos y compatibles dentro de un radio de 20 km, o de un corredor de 5 km repartido en tramos a lo largo de la ruta.
 2. **Filtros:** compatibilidad de conector, alcance con 10 % de margen de seguridad y disponibilidad en la ventana de carga. La espera máxima es de 2 h, sumando la espera por horario y por reservas.
 3. **Estimaciones:** viaje, espera, energía hasta el objetivo de carga, tiempo de carga (potencia efectiva limitada por el vehículo) y costo.
-4. **Puntaje:** suma ponderada (WSM) de distancia (o desvío), espera, carga y costo, con normalización min–max y rango mínimo por criterio. Los pesos dependen de la urgencia y se configuran en [`api/src/engine/config.ts`](api/src/engine/config.ts).
+4. **Plan de viaje** (modo ruta, cuando no se llega al destino sin cargar): Dijkstra por hora de llegada sobre los cargadores de todo el viaje; en cada parada se carga lo necesario para el tramo siguiente + 10 puntos ([D-045](docs/DECISIONES.md)).
+5. **Puntaje:** suma ponderada (WSM) de distancia (o desvío), espera, carga y costo, con normalización min–max y rango mínimo por criterio. Los pesos dependen de la urgencia y se configuran en [`api/src/engine/config.ts`](api/src/engine/config.ts).
 
 | Urgencia        | Distancia | Espera | Carga | Costo |
 | --------------- | --------: | -----: | ----: | ----: |
@@ -70,7 +72,7 @@ AWS (ECS Fargate, RDS, Cognito) está documentado en [docs/AWS_DEPLOY.md](docs/A
 | Media (30–70 %) |      0,30 |   0,20 |  0,25 |  0,25 |
 | Baja (> 70 %)   |      0,15 |   0,15 |  0,20 |  0,50 |
 
-**Simplificaciones** (documentadas a propósito): carga lineal sin curva de potencia, sin tráfico en tiempo real, ocupación conocida solo por reservas, una sola parada de carga y alcance evaluado hasta el cargador.
+**Simplificaciones** (documentadas a propósito): carga lineal sin curva de potencia, sin tráfico en tiempo real, ocupación conocida solo por reservas y tramos entre paradas estimados (línea recta × factor de circuito).
 
 ## Validación
 

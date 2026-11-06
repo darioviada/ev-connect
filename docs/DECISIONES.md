@@ -294,21 +294,30 @@ El resto de los tokens no cambia. Están en `web/src/styles/tokens.css`.
 ### D-037 · Sensibilidad de los resultados a la semilla (200 escenarios cada una, proveedor offline)
 Valores tal como los imprime `npm run validate` (mejora = (base − sistema) / base; negativo = el sistema es peor):
 
-| Semilla | Comparables | Cercanía | Tiempo total | Costo | Elige distinto que la base | Optimalidad prom. | Sin solución por preselección |
-|---|---:|---:|---:|---:|---:|---:|---:|
-| 42 (oficial) | 186 | −12,0 % | +8,9 % | +0,6 % | 34,4 % | 97,9 % | 0 |
-| 1 | 188 | −7,8 % | +10,1 % | −1,7 % | 30,3 % | 97,6 % | 2 |
-| 7 | 185 | −9,8 % | +6,3 % | −0,9 % | 30,8 % | 98,2 % | 1 |
-| 2026 | 190 | −6,0 % | +9,4 % | −0,8 % | 31,6 % | 97,9 % | 1 |
-| 99 | 186 | −9,9 % | +4,4 % | +3,0 % | 34,9 % | 97,9 % | 2 |
+| Semilla | Comparables | Cercanía | Tiempo total | Costo | Elige distinto que la base | Igual al óptimo | Optimalidad prom. | Sin solución por preselección |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| 42 (oficial) | 186 | −12,3 % | +9,1 % | +0,6 % | 34,9 % | 44,6 % | 97,3 % | 0 |
+| 1 | 188 | −7,8 % | +10,1 % | −1,9 % | 30,3 % | 47,3 % | 96,9 % | 2 |
+| 7 | 185 | −9,8 % | +7,7 % | −2,0 % | 30,8 % | 48,1 % | 97,3 % | 1 |
+| 2026 | 190 | −6,0 % | +10,7 % | −1,2 % | 32,1 % | 45,3 % | 97,6 % | 1 |
+| 99 | 186 | −9,9 % | +4,4 % | +3,0 % | 34,9 % | 43,0 % | 97,4 % | 2 |
 
-Tabla actualizada el 2026-11-06, después de D-044 (preselección limitada al alcance en modo ruta).
+Tabla actualizada el 2026-11-06, después de D-045 (plan de viaje en modo ruta y cargadores de la RN 9 en el seed). Viajes largos de cada semilla (60 escenarios, ver D-045):
+
+| Semilla | Viajes posibles: sistema / todos | Paradas (prom.) | Tiempo total: mejora frente a la base | Sistema sobre el mínimo |
+|---|---:|---:|---:|---:|
+| 42 (oficial) | 30 / 30 | 3,1 | +6,1 % | 3,0 % |
+| 1 | 26 / 26 | 2,5 | +3,5 % | 2,5 % |
+| 7 | 34 / 34 | 2,8 | +4,8 % | 2,9 % |
+| 2026 | 28 / 28 | 2,7 | +2,4 % | 5,5 % |
+| 99 | 24 / 24 | 2,3 | +1,8 % | 3,8 % |
 
 **Lectura:**
-- **Tiempo total:** la mejora es consistente (entre +4 % y +10 %).
+- **Tiempo total:** la mejora es consistente (entre +4 % y +11 %).
 - **Cercanía:** siempre se cede algo (entre 6 % y 12 %), como corresponde por definición.
-- **Costo:** **en el total no hay una mejora consistente** (entre −1,7 % y +3,0 %). La mejora en costo aparece solo con urgencia baja, donde el costo pesa 50 %; con urgencia alta el costo empeora.
-- **Optimalidad:** se mantiene cerca del 98 %.
+- **Costo:** **en el total no hay una mejora consistente** (entre −2,0 % y +3,0 %). La mejora en costo aparece solo con urgencia baja, donde el costo pesa 50 %; con urgencia alta el costo empeora.
+- **Optimalidad:** se mantiene cerca del 97 %. Bajó unas décimas (y "igual al óptimo" de ~50 % a ~45 %) al sumar los cargadores de la RN 9; la causa está explicada en D-045.
+- **Viajes largos:** el sistema encuentra siempre un plan cuando existe. En tiempo total mejora a la base entre +1,8 % y +6,1 %, y queda entre 2,5 % y 5,5 % por encima del mínimo posible.
 
 Hay que informar estos resultados tal como salen, con la semilla y la cantidad de escenarios.
 
@@ -363,6 +372,7 @@ Hay que informar estos resultados tal como salen, con la semilla y la cantidad d
 13. **Tokens de color** ajustados por contraste WCAG AA (D-032).
 14. **Arquitectura de despliegue:** una sola imagen que sirve API y web, sin S3 ni CloudFront (D-038; coincide con MANUAL_TASKS F).
 15. **Validación:** método y resultados en D-036 y D-037, y en `docs/validacion/resultados.md`. Copiar al informe **solo** esos números, con la semilla y la cantidad de escenarios.
+16. **Plan de viaje con varias paradas en modo ruta** (D-045): el SPEC §2 lo dejaba fuera de alcance; se agregó a pedido del autor. Agrega los motivos `VIAJE_NO_POSIBLE` y `CARGA_INNECESARIA`, el campo `plan` de cada recomendación y el resumen `viaje` de la respuesta.
 
 ## 2026-11-06 — Búsqueda de direcciones exactas (pedido del autor)
 
@@ -421,3 +431,57 @@ Hay que informar estos resultados tal como salen, con la semilla y la cantidad d
     - El motivo de descarte informa el alcance máximo real ("con la batería actual se llega a X km como máximo") en lugar de la "autonomía útil", que no tenía en cuenta el SoC mínimo.
 - **Impacto en la validación (semilla 42):** el caso que quedaba sin solución solo por la preselección ahora tiene solución (186 comparables, antes 185). El resto de las métricas se mueve décimas. La tabla de D-037 se actualizó con las cinco semillas.
 - **Alcance:** sigue siendo una sola parada de carga (SPEC §2). No se planifica el resto del viaje desde el cargador.
+
+## 2026-11-06 — Viajes largos con varias paradas (pedido del autor)
+
+### D-045 · Plan de viaje en modo ruta (desvío del SPEC §2)
+- **Pedido:** en un viaje largo (Córdoba → Buenos Aires, unos 700 km, con 300 km de autonomía), el sistema tiene que indicar si el viaje es posible y, si lo es, recomendar también las paradas siguientes, no solo un cargador cerca del origen.
+- **Desvío del SPEC:** el §2 deja "planificación de múltiples paradas" fuera de alcance; el autor confirmó agregarla. El modo ubicación no cambia.
+
+**Reglas del modo ruta**
+- **Si con la batería actual se llega al destino**, se avisa ("Llegás al destino sin cargar") y se recomienda como antes.
+- **Si no, cada primera parada candidata se evalúa con su plan de viaje completo** (`api/src/engine/viaje.ts`, puro):
+  - Las paradas siguientes salen de los cargadores compatibles a lo largo de **todo** el viaje.
+  - Un tramo tiene que poder recorrerse con la batería llena (margen 0,9 y llegada con ≥ 5 %) y acercar al destino al menos 5 km.
+  - En cada parada se carga **lo necesario para el tramo siguiente + 10 puntos** (tope 100 %). Fue la opción elegida por el autor frente a cargar siempre al 100 %.
+  - Se elige la secuencia que **llega antes** (algoritmo de Dijkstra por hora de llegada: manejo + espera + carga). Cada parada extra suma 10 min solo para comparar, así no aparecen paradas de 2 o 3 minutos que casi no ahorran tiempo. La disponibilidad (franjas, reservas, espera máxima de 2 h) se verifica a la hora estimada de llegada a cada parada.
+  - Una primera versión elegía "el cargador que más avanza". Se descartó porque prefería cargadores lentos: un plan Córdoba → Buenos Aires con un 22 kW en Rosario tardaba 27 h.
+- **Puntaje:** desvío de la primera parada, y espera, carga y costo **del viaje completo**. Los pesos por urgencia no cambian.
+- **Descartes nuevos:**
+  - `VIAJE_NO_POSIBLE`: desde esa primera parada no se completa el viaje.
+  - `CARGA_INNECESARIA`: al llegar no hace falta cargar; el plan sigue de largo. Se descarta solo si hay otras opciones.
+- **Viaje no posible:** si no hay plan desde ninguna primera parada, la respuesta es `VIAJE_NO_POSIBLE` con el punto donde se corta, por ejemplo: "Desde X (km 41 de 632) no hay cargadores compatibles a menos de 437 km, lo máximo que recorre el vehículo con la batería llena. El siguiente cargador compatible sobre la ruta está en el km 631".
+
+**Distancias y costo de Google**
+- **Tramos entre paradas:** se **estiman** (línea recta × factor de circuito del trayecto directo y su velocidad media). No agregan consultas a Google: solo origen → primeras paradas usa la matriz, como antes.
+- **Cargadores del viaje:** se buscan alrededor del **trazado real** si existe (10 km). Sin trazado (offline), alrededor de la recta, con un corredor que crece con el largo del viaje: 20 % de lo que exceda 50 km. La RN 9 a Rosario pasa por Villa María, unos 64 km al norte de la recta. Los viajes cortos no cambian.
+- **Primeras paradas:** se preseleccionan sobre esa misma línea. Cuando la recta ya supera el alcance actual, dentro de cada tramo se prioriza el cargador de mayor potencia.
+- **Modo offline en viajes largos:** el factor de circuito baja de 1,35 (hasta 50 km en línea recta) a 1,15 (desde 150 km), y pasados 80 km se maneja a 90 km/h. Córdoba–Buenos Aires da unos 740 km en lugar de 873. Los tramos cortos, y por lo tanto la validación principal, no cambian.
+
+**Datos sintéticos**
+- 11 cargadores sobre la RN 9: Villa María, Bell Ville, Marcos Juárez, Cañada de Gómez, Rosario (Circunvalación), San Nicolás, San Pedro y Zárate.
+- 1 en Mendoza. Entre Córdoba y Mendoza no hay ninguno, a propósito: muestra un viaje que no es posible.
+- Usan una **secuencia aleatoria propia**. Se verificó que los 60 cargadores y las 75 reservas anteriores quedan idénticos.
+
+**Interfaz**
+- Sección **"Plan de viaje"** en la hoja del mapa y en la lista: salida, paradas numeradas con km, batería al llegar, hasta cuánto cargar, tiempo, costo y horario, y llegada con su batería.
+- Pines numerados en el mapa.
+- La tarjeta muestra "+N paradas en el viaje".
+- La ficha de una parada precarga su horario de reserva. Cada parada se reserva por separado.
+- Si el viaje no es posible: "Este viaje no es posible con tu vehículo" y el motivo.
+
+**Validación**
+- `npm run validate` agrega **60 viajes largos** (Rosario, Buenos Aires y Mendoza en rotación). Los compara con una línea base (la primera parada de menor desvío + el mismo planificador) y con el mínimo por fuerza bruta. Salida en `resultados-viajes.csv` y en una sección del informe.
+- En modo ruta con plan, las métricas del informe principal (espera, carga, tiempo total, costo) pasan a ser las del viaje completo.
+- **Semilla 42, sin maquillaje:**
+  - Viajes largos: 30 de 30 posibles encontrados (los 20 a Mendoza no son posibles); 3,1 paradas en promedio; tiempo total 6,1 % mejor que la base y 3,0 % por encima del mínimo.
+  - Principal: el sistema elige el mismo cargador que antes en 199 de 200 escenarios, pero "igual al óptimo" bajó de 52,7 % a 44,6 % y la optimalidad de 97,9 % a 97,3 %.
+  - **Causa:** el óptimo por fuerza bruta se calcula con *todos* los cargadores activos. Los de la RN 9 (a más de 100 km) casi nunca ganan, pero entran a la normalización min–max y cambian los rangos, lo que reordena a los cercanos. Es la **inversión de ranking** conocida de la normalización min–max: agregar alternativas lejanas cambia el orden de las demás. Conviene mencionarlo en el informe como limitación del método.
+- **Bug encontrado por la validación:** sin trazado, el corredor angosto dejaba afuera a Villa María en los viajes a Rosario (5 viajes posibles sin plan). Se corrigió con el corredor proporcional descrito arriba.
+
+**Simplificaciones**
+- Carga lineal, sin la caída de potencia sobre el 80 %.
+- Tramos entre paradas estimados.
+- Cada cargador conserva solo su mejor hora de llegada en Dijkstra: no compara llegadas más tardías con más batería.
+- Se minimiza el tiempo de llegada, no el costo.
+- Reservas cargadas desde ayer hasta pasado mañana: un viaje de más de dos días no ve reservas posteriores.
