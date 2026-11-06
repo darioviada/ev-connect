@@ -1,5 +1,6 @@
-// /resultados/mapa — Resultados en el mapa (Leaflet/OSM): pines (el mejor en verde), origen/destino,
-// línea punteada en modo ruta (recta: el modo offline no calcula el trazado) y hoja inferior con la lista.
+// /resultados/mapa — Vista PRINCIPAL de resultados (D-042): mapa Leaflet/OSM con pines (el mejor en verde),
+// origen/destino y recorrido en modo ruta, y una hoja con el resumen y la lista. La lista sola está en
+// /resultados.
 import { Marker } from 'react-leaflet';
 import { useNavigate, useSearchParams } from 'react-router';
 import { mensajeDeError } from '../../api/cliente';
@@ -11,9 +12,16 @@ import {
   MapaBase,
   PuntoMapa,
 } from '../../components/Mapa/Mapa';
+import {
+  AvisosBusqueda,
+  Descartados,
+  GuardarRuta,
+  ResumenBusqueda,
+  SinResultados,
+} from '../../components/Resultados/InfoBusqueda';
 import { TarjetaRecomendacion } from '../../components/Resultados/TarjetaRecomendacion';
 import s from '../../components/Resultados/Resultados.module.css';
-import { Alerta, BotonIcono, Cargando, Vacio } from '../../components/ui';
+import { Alerta, BotonIcono, Cargando, EnlaceBoton, Vacio } from '../../components/ui';
 import { decodificarBusqueda } from '../../dominio/busqueda';
 import { useRecomendaciones } from '../../hooks/consultas';
 
@@ -24,7 +32,13 @@ export default function ResultadosMapa() {
   const busqueda = decodificarBusqueda(b);
   const consulta = useRecomendaciones(busqueda);
 
-  if (!busqueda) return <Vacio titulo="No hay una búsqueda para mostrar" />;
+  if (!busqueda) {
+    return (
+      <Vacio titulo="No hay una búsqueda para mostrar">
+        <EnlaceBoton a="/">Hacer una búsqueda</EnlaceBoton>
+      </Vacio>
+    );
+  }
   const r = consulta.data;
   const recs = r?.recomendaciones ?? [];
   const titulo =
@@ -39,13 +53,14 @@ export default function ResultadosMapa() {
 
   return (
     <div className={s.vistaMapa}>
+      <h1 className="sr-only">Cargadores recomendados: {titulo}</h1>
       <div className={s.barraFlotante}>
-        <BotonIcono icono="volver" etiqueta="Volver" onClick={() => navigate('/')} />
+        <BotonIcono icono="volver" etiqueta="Volver al buscador" onClick={() => navigate('/')} />
         <span className={s.tituloRuta}>{titulo}</span>
         <BotonIcono
           icono="lista"
           etiqueta="Ver como lista"
-          onClick={() => navigate(`/resultados?b=${b}`)}
+          onClick={() => navigate(`/resultados?b=${b}`, { replace: true })}
         />
       </div>
 
@@ -79,27 +94,34 @@ export default function ResultadosMapa() {
         ))}
       </MapaBase>
 
-      <section className={s.hoja} aria-label="Lista de cargadores">
+      <section className={s.hoja} aria-label="Resultados de la búsqueda">
         <div className={s.asa} aria-hidden="true" />
-        {consulta.isPending && <Cargando />}
+        {consulta.isPending && <Cargando texto="Buscando los mejores cargadores…" />}
         {consulta.isError && (
           <Alerta>
             <p>{mensajeDeError(consulta.error)}</p>
           </Alerta>
         )}
-        {r?.sinResultados && <p>{r.sinResultados.mensaje}</p>}
-        {busqueda.modo === 'ruta' && r && (
-          <p className={s.leyenda}>
-            {r.trazado
-              ? `Recorrido por calles: ${r.trazado.distanciaKm.toLocaleString('es-AR')} km, ~${r.trazado.duracionMin} min (Google, sin tráfico).`
-              : 'Línea recta entre origen y destino: el modo offline no calcula el recorrido por calles.'}
-          </p>
+        {r && (
+          <>
+            <ResumenBusqueda r={r} busqueda={busqueda} />
+            <AvisosBusqueda r={r} />
+            {busqueda.modo === 'ruta' && (
+              <p className={s.leyenda}>
+                {r.trazado
+                  ? `Recorrido por calles: ${r.trazado.distanciaKm.toLocaleString('es-AR')} km, ~${r.trazado.duracionMin} min (Google, sin tráfico).`
+                  : 'Línea recta entre origen y destino: el modo offline no calcula el recorrido por calles.'}
+              </p>
+            )}
+            <GuardarRuta busqueda={busqueda} />
+            <SinResultados r={r} />
+          </>
         )}
         {recs.length > 0 && (
           <>
             <h2 className={s.conteo}>
               {recs.length} cargador{recs.length === 1 ? '' : 'es'}{' '}
-              {busqueda.modo === 'ruta' ? 'en tu ruta' : 'cerca'}
+              {busqueda.modo === 'ruta' ? 'en tu ruta' : 'cerca'}, ordenados según tu búsqueda
             </h2>
             <ul className={s.lista} aria-label="Cargadores recomendados">
               {recs.map((rec) => (
@@ -115,6 +137,7 @@ export default function ResultadosMapa() {
             </ul>
           </>
         )}
+        {r && <Descartados r={r} />}
       </section>
     </div>
   );

@@ -129,8 +129,16 @@
   }
   .hoja {
     width: 420px;
+    flex: none;
     max-height: none;
     border-radius: 0;
+  }
+  /* En escritorio la lista es un panel lateral: la barra flotante va solo sobre el mapa */
+  .barraFlotante {
+    left: calc(420px + var(--espacio-4));
+  }
+  .asa {
+    display: none;
   }
 }
 

@@ -192,13 +192,26 @@ describe('búsqueda como invitado (HU-006 a HU-009)', () => {
 
     await usuario.click(screen.getByRole('button', { name: 'Buscar cargadores' }));
 
+    // La vista principal de resultados es el mapa, con el resumen y la lista en la hoja (D-042)
     expect(
-      await screen.findByRole('heading', { name: 'Cargadores recomendados' }),
+      await screen.findByRole('heading', {
+        name: 'Cargadores recomendados: Cerca de Nueva Córdoba',
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('region', { name: 'Mapa de cargadores recomendados' }),
     ).toBeInTheDocument();
     const lista = await screen.findByRole('list', { name: 'Cargadores recomendados' });
     expect(within(lista).getByText('Playón de carga Centro')).toBeInTheDocument();
     expect(within(lista).getByText('Mejor opción')).toBeInTheDocument();
+    expect(screen.getByText('Peugeot e-208')).toBeInTheDocument(); // resumen de la búsqueda
     expect(screen.getByText(/1 cargador descartado/)).toBeInTheDocument();
+
+    // A un toque, la vista en lista
+    await usuario.click(screen.getByRole('button', { name: 'Ver como lista' }));
+    expect(
+      await screen.findByRole('heading', { name: 'Cargadores recomendados' }),
+    ).toBeInTheDocument();
 
     const busqueda = pedidos.find((p) => p.url === '/api/v1/recomendaciones')!;
     expect(busqueda.body).toEqual({

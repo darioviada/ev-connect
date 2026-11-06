@@ -97,7 +97,8 @@ export function Home() {
         ? { destino: { lat: f.destino.lat, lng: f.destino.lng }, destinoNombre: f.destino.nombre }
         : {}),
     };
-    navigate(`/resultados?b=${codificarBusqueda(busqueda)}`);
+    // La vista principal de resultados es el mapa (D-042); la lista está a un toque.
+    navigate(`/resultados/mapa?b=${codificarBusqueda(busqueda)}`);
   }
 
   return (

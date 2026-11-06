@@ -67,6 +67,9 @@ export function DetalleCargador() {
     queryKey: ['cargador', id],
     queryFn: () => apiCargadores.detalle(id),
   });
+  // "Volver" regresa a la vista de la que se vino (mapa o lista). Si se entró directo por un enlace,
+  // va al mapa de la búsqueda (vista principal, D-042) o al inicio.
+  const llegoDesdeLaApp = useLocation().key !== 'default';
 
   if (detalle.isPending) return <Cargando />;
   if (detalle.isError) {
@@ -77,7 +80,7 @@ export function DetalleCargador() {
     );
   }
   const c = detalle.data;
-  const volver = b ? `/resultados?b=${b}` : true;
+  const volver = llegoDesdeLaApp ? true : b ? `/resultados/mapa?b=${b}` : '/';
 
   return (
     <div className={s.pagina}>

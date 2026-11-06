@@ -64,3 +64,8 @@ a {
     background: var(--color-fondo);
   }
 }
+
+/* Los controles de zoom del mapa quedan por encima del aviso "Datos de demostración" */
+.leaflet-bottom.leaflet-right .leaflet-control-zoom {
+  margin-bottom: 40px;
+}
