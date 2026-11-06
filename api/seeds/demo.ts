@@ -2,9 +2,14 @@
 // Idempotente: cada dato tiene un id estable, así que volver a correrlo actualiza en lugar de duplicar
 // y no toca lo que hayan creado los usuarios. Con `reset` vacía todas las tablas antes de sembrar.
 // En modo Cognito no crea los usuarios de demostración ni sus datos (no tienen contraseña en Cognito).
+import { readFile } from 'node:fs/promises';
 import bcrypt from 'bcryptjs';
 import type { Knex } from 'knex';
+import { FOTOS } from './datos/fotos.js';
 import { generarDatos } from './generar.js';
+
+/** Carpeta de las fotos del catálogo (en la imagen Docker se copia junto al código compilado). */
+const DIR_FOTOS = new URL('./datos/fotos/', import.meta.url);
 
 export interface OpcionesSembrar {
   reset: boolean;
@@ -43,6 +48,23 @@ export async function sembrar(db: Knex, opciones: OpcionesSembrar): Promise<Resu
     throw new Error('Falta la tabla dev_credencial: corré primero `npm run db:migrate`.');
   }
 
+  // Fotos del catálogo (D-047), leídas antes de la transacción.
+  const fotos = await Promise.all(
+    datos.modelos.flatMap((m) => {
+      const f = FOTOS[m.clave];
+      if (!f) return [];
+      return [
+        readFile(new URL(f.archivo, DIR_FOTOS)).then((contenido) => ({
+          modelo_id: m.id,
+          contenido,
+          tipo_mime: 'image/jpeg',
+          credito: f.credito,
+          fuente_url: f.fuenteUrl,
+        })),
+      ];
+    }),
+  );
+
   // Los hashes se calculan fuera de la transacción (bcrypt es lento a propósito).
   const credenciales = await Promise.all(
     datos.usuarios
@@ -75,6 +97,11 @@ export async function sembrar(db: Knex, opciones: OpcionesSembrar): Promise<Resu
       )
       .onConflict('id')
       .merge();
+
+    // Solo si el modelo todavía no tiene foto: no se pisa la que haya subido un administrador.
+    if (fotos.length > 0) {
+      await trx('vehiculo_foto').insert(fotos).onConflict('modelo_id').ignore();
+    }
 
     await trx('usuario')
       .insert(

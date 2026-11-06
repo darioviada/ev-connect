@@ -39,6 +39,8 @@ COPY web/package.json web/
 RUN npm ci --omit=dev --workspace api && npm cache clean --force
 
 COPY --from=build /app/api/dist api/dist
+# Fotos del catálogo (D-047): el seed las lee junto al código compilado.
+COPY --from=build /app/api/seeds/datos/fotos api/dist/seeds/datos/fotos
 COPY --from=build /app/web/dist web/dist
 COPY --chmod=755 api/docker-entrypoint.sh api/
 
