@@ -20,8 +20,13 @@ Proyecto aparte del TFG: no forma parte de los workspaces de la app, así que `n
 ```bash
 cd video
 npm install
-npm run studio      # Remotion Studio: elegir "DemoEVConnect" o una escena suelta ("Escena01-apertura", …)
-npm run render      # video final en out/evconnect-demo.mp4 (solo cuando esté terminado)
+npm run studio                 # Remotion Studio: "DemoEVConnect" o una escena suelta ("Escena01-apertura", …)
+npm run render:escenas         # cada escena en out/escenas/NN-id.mp4 (para intercalar en una edición)
+npm run render:escenas -- 5 6  # solo algunas escenas
+npm run render                 # el video completo en out/evconnect-demo.mp4
 ```
+
+Se exporta en MP4 (H.264, CRF 18: calidad alta, lo importa cualquier editor), 1920 × 1080 a 30 fps y sin
+audio. También se puede exportar desde Studio con el botón **Render** de cada composición.
 
 Las tipografías (Sora y Plus Jakarta Sans, licencia OFL-1.1) están copiadas de `@fontsource` en `public/fuentes`.

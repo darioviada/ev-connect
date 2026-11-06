@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "studio": "remotion studio src/index.ts",
-    "render": "remotion render src/index.ts DemoEVConnect out/evconnect-demo.mp4",
+    "render": "remotion render src/index.ts DemoEVConnect out/evconnect-demo.mp4 --crf=18",
+    "render:escenas": "node scripts/render-escenas.mjs",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
