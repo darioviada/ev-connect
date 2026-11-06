@@ -10,6 +10,10 @@ import home from '../../../web/src/pages/Home/Home.module.css';
 import publicar from '../../../web/src/pages/Publicar/Publicar.module.css';
 
 export const CLASE_CELULAR = 'pantalla-celular';
+/** Contenido de la ventana de escritorio (escena 9): ahí valen las reglas de escritorio de la app. */
+export const CLASE_ESCRITORIO = 'ventana-escritorio';
+
+const e = (clase: string | undefined) => `.${CLASE_ESCRITORIO} .${clase}`;
 
 const p = (clase: string | undefined) => `.${CLASE_CELULAR} .${clase}`;
 
@@ -43,6 +47,11 @@ ${p(detalle.columnas)} { display: flex; }
 ${p(publicar.grilla)} { grid-template-columns: none; }
 ${p(publicar.franja)} { grid-template-columns: 1fr 1fr; }
 ${p(publicar.franja)} > :first-child { grid-column: 1 / -1; }
+
+/* Ventana de escritorio: lo "fixed" de la app queda dentro de la ventana */
+${e(marco.marco)} { min-height: 100%; height: 100%; }
+${e(marco.contenido)} { overflow: hidden; }
+${e(marco.avisoDemo)} { position: absolute; }
 `;
 
 export function EstilosMovil() {

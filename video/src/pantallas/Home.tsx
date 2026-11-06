@@ -221,6 +221,26 @@ export function PantallaHome({
 
           <Boton anchoCompleto>Buscar cargadores</Boton>
         </section>
+
+        {/* Accesos rápidos (solo en escritorio, como en la app) */}
+        <nav className={home.accesos} aria-label="Accesos rápidos">
+          <a>
+            <Icono nombre="auto" />
+            Mis vehículos
+          </a>
+          <a>
+            <Icono nombre="rayo" />
+            Publicar cargador
+          </a>
+          <a>
+            <Icono nombre="calendario" />
+            Mis reservas
+          </a>
+          <a>
+            <Icono nombre="corazon" />
+            Favoritos
+          </a>
+        </nav>
       </div>
     </MarcoApp>
   );

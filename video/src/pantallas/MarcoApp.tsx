@@ -1,5 +1,6 @@
-// Estructura de la app con sesión iniciada (web/src/components/Marco) en versión móvil: barra superior con
-// el logo y el avatar, contenido y navegación inferior. Mismo CSS Module; sin lógica de sesión.
+// Estructura de la app con sesión iniciada (web/src/components/Marco): barra superior con el logo, la
+// navegación de escritorio y el usuario; contenido; navegación inferior (móvil). Mismo CSS Module y mismas
+// reglas: dentro del celular se ve la versión móvil y en la ventana de escritorio, la de escritorio.
 import type { ReactNode } from 'react';
 import { Icono, type NombreIcono } from '../../../web/src/components/ui/Icono';
 import marco from '../../../web/src/components/Marco/Marco.module.css';
@@ -37,7 +38,15 @@ export function MarcoApp({
           </span>
           EVConnect
         </span>
+        <nav className={marco.navEscritorio} aria-label="Principal">
+          {SECCIONES.slice(1).map((s) => (
+            <a key={s.id} className={s.id === seccion ? marco.activo : undefined}>
+              {s.nombre}
+            </a>
+          ))}
+        </nav>
         <div className={marco.usuario}>
+          <span className={marco.saludo}>Hola, {JUAN.nombre.split(' ')[0]}</span>
           <span className={marco.avatar} aria-hidden="true">
             {JUAN.nombre.charAt(0)}
           </span>
