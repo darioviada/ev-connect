@@ -18,11 +18,14 @@ const SECCIONES: { id: Seccion; nombre: string; icono: NombreIcono }[] = [
 export function MarcoApp({
   seccion,
   desplazamiento = 0,
+  sinNavegacion = false,
   children,
 }: {
   seccion: Seccion;
   /** Scroll simulado del contenido, en px. */
   desplazamiento?: number;
+  /** Vista de mapa: sin navegación inferior y contenido a pantalla completa (como en la app). */
+  sinNavegacion?: boolean;
   children: ReactNode;
 }) {
   return (
@@ -44,18 +47,27 @@ export function MarcoApp({
         </div>
       </header>
 
-      <main className={marco.contenido} style={{ position: 'relative' }}>
-        <div style={{ transform: `translateY(${-desplazamiento}px)` }}>{children}</div>
+      <main
+        className={sinNavegacion ? marco.contenidoCompleto : marco.contenido}
+        style={{ position: 'relative' }}
+      >
+        {sinNavegacion ? (
+          children
+        ) : (
+          <div style={{ transform: `translateY(${-desplazamiento}px)` }}>{children}</div>
+        )}
       </main>
 
-      <nav className={marco.navInferior} aria-label="Principal">
-        {SECCIONES.map((s) => (
-          <a key={s.id} className={s.id === seccion ? marco.activo : undefined}>
-            <Icono nombre={s.icono} />
-            <span>{s.nombre}</span>
-          </a>
-        ))}
-      </nav>
+      {!sinNavegacion && (
+        <nav className={marco.navInferior} aria-label="Principal">
+          {SECCIONES.map((s) => (
+            <a key={s.id} className={s.id === seccion ? marco.activo : undefined}>
+              <Icono nombre={s.icono} />
+              <span>{s.nombre}</span>
+            </a>
+          ))}
+        </nav>
+      )}
 
       <p className={marco.avisoDemo} role="note">
         Datos de demostración (sintéticos)

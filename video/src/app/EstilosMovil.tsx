@@ -4,6 +4,7 @@
 // Los elementos "fixed" de la app se fijan al celular (absolute dentro de la pantalla).
 import marco from '../../../web/src/components/Marco/Marco.module.css';
 import ui from '../../../web/src/components/ui/ui.module.css';
+import resultados from '../../../web/src/components/Resultados/Resultados.module.css';
 import home from '../../../web/src/pages/Home/Home.module.css';
 
 export const CLASE_CELULAR = 'pantalla-celular';
@@ -25,6 +26,17 @@ ${p(home.saludo)} { display: flex; }
 ${p(home.tarjeta)} { padding: 0; border-radius: 0; background: none; box-shadow: none; }
 ${p(home.grilla)} { display: flex; gap: var(--espacio-4); }
 ${p(home.accesos)} { display: none; }
+${p(marco.contenidoCompleto)} { min-height: 0; overflow: hidden; }
+${p(resultados.vistaMapa)} { flex-direction: column; height: 100%; }
+${p(resultados.hoja)} {
+  width: auto;
+  flex: none;
+  max-height: 330px;
+  overflow: hidden;
+  border-radius: var(--radio-tarjeta-grande) var(--radio-tarjeta-grande) 0 0;
+}
+${p(resultados.barraFlotante)} { left: var(--espacio-4); }
+${p(resultados.asa)} { display: block; }
 `;
 
 export function EstilosMovil() {
