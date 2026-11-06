@@ -1,7 +1,9 @@
 // DATOS SINTÉTICOS DE DEMOSTRACIÓN — zonas donde se ubican los cargadores de ejemplo.
 // Coordenadas ancla APROXIMADAS (verificar). La mayoría está en Córdoba capital (zona piloto), algunas sobre los
-// corredores Córdoba–Villa Carlos Paz y Córdoba–Alta Gracia (para el modo ruta) y unas pocas en otras ciudades
-// del país, porque el sistema tiene alcance nacional (docs/DECISIONES.md, D-001).
+// corredores Córdoba–Villa Carlos Paz y Córdoba–Alta Gracia (para el modo ruta), sobre la RN 9 Córdoba–Buenos
+// Aires (viajes largos con paradas, D-045) y unas pocas en otras ciudades del país, porque el sistema tiene
+// alcance nacional (docs/DECISIONES.md, D-001). Entre Córdoba y Mendoza NO hay cargadores a propósito: sirve
+// para mostrar un viaje que no es posible.
 
 export interface ZonaSeed {
   clave: string;
@@ -13,7 +15,8 @@ export interface ZonaSeed {
   dispersion: number;
   publicos: number;
   privados: number;
-  grupo: 'cordoba' | 'corredor-carlos-paz' | 'corredor-alta-gracia' | 'otras-ciudades';
+  grupo:
+    'cordoba' | 'corredor-carlos-paz' | 'corredor-alta-gracia' | 'corredor-rn9' | 'otras-ciudades';
 }
 
 const ciudad = (
@@ -149,6 +152,110 @@ export const ZONAS: readonly ZonaSeed[] = [
     dispersion: 0.004,
     publicos: 1,
     privados: 1,
+    grupo: 'otras-ciudades',
+  },
+
+  // Corredor RN 9 Córdoba – Rosario – Buenos Aires (al final de la lista para no alterar los cargadores
+  // anteriores del seed): 8 públicos + 3 privados
+  {
+    clave: 'rn9-villa-maria',
+    nombre: 'Acceso RN 9',
+    ciudad: 'Villa María',
+    lat: -32.4075,
+    lng: -63.2402,
+    dispersion: 0.003,
+    publicos: 1,
+    privados: 1,
+    grupo: 'corredor-rn9',
+  },
+  {
+    clave: 'rn9-bell-ville',
+    nombre: 'Acceso RN 9',
+    ciudad: 'Bell Ville',
+    lat: -32.6259,
+    lng: -62.6887,
+    dispersion: 0.003,
+    publicos: 1,
+    privados: 0,
+    grupo: 'corredor-rn9',
+  },
+  {
+    clave: 'rn9-marcos-juarez',
+    nombre: 'Acceso RN 9',
+    ciudad: 'Marcos Juárez',
+    lat: -32.6978,
+    lng: -62.1067,
+    dispersion: 0.003,
+    publicos: 1,
+    privados: 1,
+    grupo: 'corredor-rn9',
+  },
+  {
+    clave: 'rn9-canada-de-gomez',
+    nombre: 'Acceso RN 9',
+    ciudad: 'Cañada de Gómez',
+    lat: -32.8164,
+    lng: -61.3946,
+    dispersion: 0.003,
+    publicos: 1,
+    privados: 0,
+    grupo: 'corredor-rn9',
+  },
+  {
+    clave: 'rn9-rosario',
+    nombre: 'Circunvalación',
+    ciudad: 'Rosario',
+    lat: -32.93,
+    lng: -60.72,
+    dispersion: 0.003,
+    publicos: 1,
+    privados: 0,
+    grupo: 'corredor-rn9',
+  },
+  {
+    clave: 'rn9-san-nicolas',
+    nombre: 'Acceso RN 9',
+    ciudad: 'San Nicolás de los Arroyos',
+    lat: -33.335,
+    lng: -60.2252,
+    dispersion: 0.003,
+    publicos: 1,
+    privados: 0,
+    grupo: 'corredor-rn9',
+  },
+  {
+    clave: 'rn9-san-pedro',
+    nombre: 'Acceso RN 9',
+    ciudad: 'San Pedro',
+    lat: -33.6797,
+    lng: -59.6627,
+    dispersion: 0.003,
+    publicos: 1,
+    privados: 0,
+    grupo: 'corredor-rn9',
+  },
+  {
+    clave: 'rn9-zarate',
+    nombre: 'Acceso RN 9',
+    ciudad: 'Zárate',
+    lat: -34.0981,
+    lng: -59.0286,
+    dispersion: 0.003,
+    publicos: 1,
+    privados: 1,
+    grupo: 'corredor-rn9',
+  },
+
+  // Destino de un viaje que no es posible (sin cargadores entre Córdoba y Mendoza): 1 público
+  {
+    clave: 'mendoza-centro',
+    nombre: 'Centro',
+    ciudad: 'Mendoza',
+    lat: -32.8895,
+    lng: -68.8458,
+    dispersion: 0.004,
+    publicos: 1,
+    privados: 0,
     grupo: 'otras-ciudades',
   },
 ];

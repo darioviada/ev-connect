@@ -46,11 +46,11 @@ describe('generarDatos', () => {
     );
   });
 
-  it('genera ~60 cargadores: 20 públicos y 40 privados, de 7.4 a 150 kW', () => {
+  it('genera ~70 cargadores: 29 públicos y 43 privados, de 7.4 a 150 kW', () => {
     const publicos = datos.cargadores.filter((c) => c.tipo === 'publico');
     const privados = datos.cargadores.filter((c) => c.tipo === 'privado');
-    expect(publicos).toHaveLength(20);
-    expect(privados).toHaveLength(40);
+    expect(publicos).toHaveLength(29);
+    expect(privados).toHaveLength(43);
     const potencias = datos.cargadores.map((c) => c.potencia);
     expect(Math.min(...potencias)).toBe(7.4);
     expect(Math.max(...potencias)).toBe(150);
@@ -60,10 +60,16 @@ describe('generarDatos', () => {
     expect(datos.cargadores.some((c) => c.estado === 'inactivo')).toBe(true);
   });
 
-  it('cubre Córdoba capital, ambos corredores y otras ciudades', () => {
+  it('cubre Córdoba capital, los corredores (incluida la RN 9) y otras ciudades', () => {
     const grupos = new Set(datos.cargadores.map((c) => c.zona.grupo));
     expect(grupos).toEqual(
-      new Set(['cordoba', 'corredor-carlos-paz', 'corredor-alta-gracia', 'otras-ciudades']),
+      new Set([
+        'cordoba',
+        'corredor-carlos-paz',
+        'corredor-alta-gracia',
+        'corredor-rn9',
+        'otras-ciudades',
+      ]),
     );
     expect(datos.cargadores.filter((c) => c.zona.grupo === 'cordoba').length).toBeGreaterThan(40);
   });

@@ -176,7 +176,7 @@ describe('ejecución completa sobre la base (invariantes)', () => {
     const a = await correr();
     const b = await correr();
     expect(aCsv(a.filas)).toBe(aCsv(b.filas));
-    expect(a.cargadoresActivos).toBe(58);
+    expect(a.cargadoresActivos).toBe(70);
     expect(a.elementosConsultados).toBe(0); // offline: sin costo
 
     for (const f of a.filas) {

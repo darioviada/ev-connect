@@ -30,7 +30,7 @@ describe('sembrar (modo local)', () => {
   it('carga catálogo, cargadores, franjas, usuarios y reservas', async () => {
     const r = await sembrarDesdeCero();
     expect(r.modelos).toBe(8);
-    expect(r.cargadores).toEqual({ publicos: 20, privados: 40, inactivos: 2 });
+    expect(r.cargadores).toEqual({ publicos: 29, privados: 43, inactivos: 2 });
     expect(r.franjas).toBeGreaterThan(0);
     expect(r.reservas).toBeGreaterThan(0);
     expect(r.usuarios).toBe(27); // 25 dueños ficticios + 2 de demostración
@@ -82,7 +82,7 @@ describe('sembrar (modo local)', () => {
     const activos = await db('cargador')
       .where('estado', 'activo')
       .count<{ n: string }[]>({ n: '*' });
-    expect(Number(activos[0]!.n)).toBe(58);
+    expect(Number(activos[0]!.n)).toBe(70);
   });
 });
 
@@ -93,6 +93,6 @@ describe('sembrar (modo Cognito)', () => {
       await db('usuario').whereIn('email', ['admin@demo.local', 'usuario@demo.local']).first(),
     ).toBeUndefined();
     expect(await contar('dev_credencial')).toBe(0);
-    expect(await contar('cargador')).toBe(60);
+    expect(await contar('cargador')).toBe(72);
   });
 });
