@@ -5,6 +5,7 @@
 import marco from '../../../web/src/components/Marco/Marco.module.css';
 import ui from '../../../web/src/components/ui/ui.module.css';
 import resultados from '../../../web/src/components/Resultados/Resultados.module.css';
+import detalle from '../../../web/src/pages/Detalle/Detalle.module.css';
 import home from '../../../web/src/pages/Home/Home.module.css';
 
 export const CLASE_CELULAR = 'pantalla-celular';
@@ -37,6 +38,7 @@ ${p(resultados.hoja)} {
 }
 ${p(resultados.barraFlotante)} { left: var(--espacio-4); }
 ${p(resultados.asa)} { display: block; }
+${p(detalle.columnas)} { display: flex; }
 `;
 
 export function EstilosMovil() {
