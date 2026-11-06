@@ -377,3 +377,25 @@ Hay que informar estos resultados tal como salen, con la semilla y la cantidad d
 - **Interfaz:** `GET /api/v1/configuracion` (público, sin secretos) informa los proveedores activos. Con eso, el campo dice "Calle y número, barrio o ciudad" (Nominatim) o "Barrio o ciudad" (lista fija), con mensajes específicos cuando no hay resultados y la atribución de OpenStreetMap junto a los resultados.
 - **Política de uso:** se mantiene: 1 pedido por segundo (los dos pasos también), `User-Agent` propio, caché de 24 horas y búsqueda solo al confirmar (sin autocompletado). Para apagarlo, `GEOCODING_PROVIDER=static`.
 - **Limitación:** la precisión depende de los datos de OpenStreetMap. Hay calles sin numeración cargada, y para otras ciudades conviene escribir la ciudad ("San Martín 100, Rosario").
+
+## 2026-11-06 — El mapa como vista principal de resultados (pedido del autor)
+
+### D-042 · Después de buscar se muestra el mapa
+- **Decisión:** al buscar se abre `/resultados/mapa`. La lista (`/resultados`) queda a un toque con el botón de lista. Las rutas de SPEC §10.2 no cambian; solo cuál se muestra primero.
+- **Motivo:** el mapa ayuda a orientarse y es la información principal de una búsqueda de cargadores. Funciona bien en móvil (hoja inferior) y en escritorio (panel lateral).
+- **Cambios:**
+  - La hoja del mapa incorpora todo lo que antes solo tenía la lista: resumen (vehículo, batería, urgencia y autonomía), avisos, "Guardar esta ruta", motivo cuando no hay resultados y cargadores descartados. Son componentes compartidos (`components/Resultados/InfoBusqueda.tsx`).
+  - "Volver" desde el detalle regresa a la vista de la que se vino. Si se entró por un enlace directo, va al mapa.
+  - Cambiar entre mapa y lista reemplaza la entrada del historial, para no acumular idas y vueltas.
+  - Título de página para lectores de pantalla en la vista de mapa.
+  - En escritorio, la barra flotante va solo sobre el mapa.
+  - Los controles de zoom quedan por encima del aviso de datos sintéticos.
+- **Capturas:** el script recorre el nuevo flujo (`04-resultados-mapa`, `05-resultados-lista`, `15-ruta-mapa`, `16-resultados-ruta-lista` y `17b-ruta-mapa-escritorio`).
+
+### D-043 · Ajuste de la búsqueda de lugares (complementa D-041)
+- La búsqueda **local acotada** (`bounded=1`) se usa solo cuando lo escrito tiene un número, es decir, una dirección.
+- Para barrios y ciudades se busca en todo el país, **priorizando** lo cercano (`bounded=0`). Con la búsqueda local, "Villa Carlos Paz" devolvía primero la calle "Variante Carlos Paz" de Córdoba.
+- Verificado con consultas reales:
+  - "Villa Carlos Paz" devuelve la ciudad y "Nueva Córdoba" el barrio.
+  - "Colón 1234" devuelve Avenida Colón 1234 de Córdoba.
+  - "General Paz 100" devuelve la de Córdoba capital.

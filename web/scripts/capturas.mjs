@@ -59,13 +59,23 @@ async function captura(nombre, opciones = {}) {
   console.log(`  ✓ ${nombre}.png`);
 }
 
-async function buscarUbicacion(etiqueta, texto, resultado) {
+/** Busca un lugar y elige el primer resultado (no depende del nombre exacto que devuelva el proveedor). */
+async function buscarUbicacion(etiqueta, texto) {
   await pagina.getByLabel(etiqueta, { exact: true }).fill(texto);
   await pagina.getByLabel(etiqueta, { exact: true }).press('Enter');
   await pagina
-    .getByRole('button', { name: new RegExp(resultado) })
+    .getByRole('list', { name: 'Lugares encontrados' })
+    .getByRole('button')
     .first()
     .click();
+}
+
+async function esperarMosaicos() {
+  await pagina
+    .locator('.leaflet-tile-loaded')
+    .first()
+    .waitFor({ timeout: 15_000 })
+    .catch(() => undefined);
 }
 
 console.log(`Capturas en ${SALIDA}`);
@@ -80,22 +90,19 @@ await captura('02-login');
 await pagina.goto(`${BASE}/inicio`);
 await pagina.getByRole('button', { name: 'Continuar como invitado' }).click();
 await pagina.getByLabel('Tu vehículo', { exact: true }).selectOption({ label: 'Peugeot e-208' });
-await buscarUbicacion('Ubicación', 'nueva cordoba', 'Nueva Córdoba');
+await buscarUbicacion('Ubicación', 'Nueva Córdoba, Córdoba');
 await captura('03-home-buscador');
 
+// Después de buscar se ve el mapa (vista principal) y, a un toque, la lista
 await pagina.getByRole('button', { name: 'Buscar cargadores' }).click();
 await pagina.getByRole('list', { name: 'Cargadores recomendados' }).waitFor();
-await captura('04-resultados');
-
-await pagina.getByRole('button', { name: 'Ver en el mapa' }).click();
-await pagina
-  .locator('.leaflet-tile-loaded')
-  .first()
-  .waitFor({ timeout: 15_000 })
-  .catch(() => undefined);
-await captura('05-resultados-mapa', { completa: false });
+await esperarMosaicos();
+await captura('04-resultados-mapa', { completa: false });
 
 await pagina.getByRole('button', { name: 'Ver como lista' }).click();
+await pagina.getByRole('heading', { name: 'Cargadores recomendados' }).waitFor();
+await captura('05-resultados-lista');
+
 await pagina
   .getByRole('list', { name: 'Cargadores recomendados' })
   .getByRole('link')
@@ -130,24 +137,26 @@ await captura('14-rutas-guardadas');
 // 4. Modo ruta: Córdoba → Villa Carlos Paz
 await pagina.goto(`${BASE}/`);
 await pagina.getByRole('button', { name: 'Ruta', exact: true }).click();
-await buscarUbicacion('Origen', 'cordoba centro', 'Córdoba Centro');
-await buscarUbicacion('Destino', 'carlos paz', 'Villa Carlos Paz');
+await buscarUbicacion('Origen', 'Plaza San Martín, Córdoba');
+await buscarUbicacion('Destino', 'Villa Carlos Paz');
 await pagina.getByRole('button', { name: 'Buscar cargadores' }).click();
 await pagina.getByRole('list', { name: 'Cargadores recomendados' }).waitFor();
-await captura('15-resultados-ruta');
-await pagina.getByRole('button', { name: 'Ver en el mapa' }).click();
-await pagina
-  .locator('.leaflet-tile-loaded')
-  .first()
-  .waitFor({ timeout: 15_000 })
-  .catch(() => undefined);
-await captura('16-ruta-mapa', { completa: false });
+await esperarMosaicos();
+await captura('15-ruta-mapa', { completa: false });
+await pagina.getByRole('button', { name: 'Ver como lista' }).click();
+await pagina.getByRole('heading', { name: 'Cargadores recomendados' }).waitFor();
+await captura('16-resultados-ruta-lista');
+const busquedaRuta = pagina.url().replace('/resultados?', '/resultados/mapa?');
 
 // 5. Escritorio
 await pagina.setViewportSize(ESCRITORIO);
 await pagina.goto(`${BASE}/`);
 await pagina.getByRole('heading', { name: '¿Dónde cargamos tu vehículo?' }).waitFor();
 await captura('17-home-escritorio', { completa: false });
+await pagina.goto(busquedaRuta);
+await pagina.getByRole('list', { name: 'Cargadores recomendados' }).waitFor();
+await esperarMosaicos();
+await captura('17b-ruta-mapa-escritorio', { completa: false });
 
 // 6. Administración
 await pagina.goto(`${BASE}/login`);
