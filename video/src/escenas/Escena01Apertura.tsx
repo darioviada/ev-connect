@@ -1,49 +1,13 @@
 // Escena 1 — Apertura (guion 0:00–0:20). Plano fijo de la pantalla de Inicio en el celular; aparecen el
 // título del TFG y el autor como texto sobreimpreso.
-// La pantalla es la de la app (web/src/pages/Inicio) armada con sus componentes y su CSS Module reales;
-// solo se omite la lógica de sesión y navegación.
 import { AbsoluteFill, interpolate, useCurrentFrame, useVideoConfig } from 'remotion';
-import { Boton, EnlaceBoton, Icono } from '../../../web/src/components/ui';
-import inicio from '../../../web/src/pages/Inicio/Inicio.module.css';
 import { entrada, fundidoEscena, tramo } from '../animacion/tiempo';
 import { PantallaApp } from '../app/PantallaApp';
 import { CREDITOS } from '../config/escenas';
 import { Fondo } from '../marco/Fondo';
 import { MarcoCelular } from '../marco/MarcoCelular';
 import { Antetitulo, Linea, Titular } from '../marco/TextoSobreimpreso';
-
-/** Pantalla de Inicio de la app; cada parte entra en su momento (fracciones de la escena). */
-export function PantallaInicio({ frame, duracion }: { frame: number; duracion: number }) {
-  const logo = tramo(frame, duracion, 0.03, 0.09);
-  return (
-    <main className={inicio.pagina} style={{ minHeight: '100%', height: '100%' }}>
-      <div
-        className={inicio.logo}
-        aria-hidden="true"
-        style={{ opacity: logo, transform: `scale(${0.6 + 0.4 * logo})` }}
-      >
-        <Icono nombre="rayo" tamano={40} />
-      </div>
-      <h1 className={inicio.titulo} style={entrada(frame, duracion, 0.06, 0.12)}>
-        EVConnect
-      </h1>
-      <p className={inicio.subtitulo} style={entrada(frame, duracion, 0.08, 0.14)}>
-        Cargadores públicos y privados, recomendados para vos
-      </p>
-      <div className={inicio.acciones} style={entrada(frame, duracion, 0.1, 0.17)}>
-        <EnlaceBoton a="/login" anchoCompleto>
-          Iniciar sesión
-        </EnlaceBoton>
-        <Boton variante="contorno" anchoCompleto>
-          Continuar como invitado
-        </Boton>
-      </div>
-      <p className={inicio.aviso} role="note" style={entrada(frame, duracion, 0.13, 0.19, 12)}>
-        Datos de demostración (sintéticos)
-      </p>
-    </main>
-  );
-}
+import { PantallaInicio } from '../pantallas/Inicio';
 
 export function Escena01Apertura() {
   const frame = useCurrentFrame();

@@ -11,6 +11,7 @@ import {
   type TramoEscena,
 } from './config/escenas';
 import { Escena01Apertura } from './escenas/Escena01Apertura';
+import { Escena02Roles } from './escenas/Escena02Roles';
 import { Pendiente } from './escenas/Pendiente';
 
 cargarFuentes();
@@ -18,6 +19,7 @@ cargarFuentes();
 /** Escenas ya armadas; el resto muestra un marcador con su tramo de la línea de tiempo. */
 const COMPONENTES: Partial<Record<string, ComponentType>> = {
   apertura: Escena01Apertura,
+  roles: Escena02Roles,
 };
 
 function EscenaDe({ escena }: { escena: TramoEscena }) {
