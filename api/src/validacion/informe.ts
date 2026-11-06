@@ -215,6 +215,7 @@ export function aMarkdown(filas: readonly FilaEscenario[], p: ParametrosInforme)
 - Escenarios: **${r.escenarios}**. Con solución para el sistema y para la base: **${r.comparables}**.
 - Sin solución evaluando todos los cargadores: **${r.sinSolucionCompleto}**${motivos.size ? ` (${[...motivos].map(([m, n]) => `${m}: ${n}`).join(', ')})` : ''}. En esos casos nadie podría recomendar nada: por ejemplo, batería insuficiente o sin cargadores compatibles disponibles.
 - Sin solución **solo por la preselección** (había un cargador factible fuera de los candidatos): **${r.sinSolucionPorPreseleccion}**.
+- El sistema eligió un cargador que, **evaluando todos los cargadores**, el motor descarta (por ejemplo, en sentido contrario al viaje cuando entre los candidatos no había otro, D-046): **${r.sistemaDescartadoEnCompleto}**. Esos casos no tienen puntaje en el conjunto completo y quedan fuera del grado de optimalidad.
 - El sistema elige un cargador **distinto** que la línea base en el **${num(r.distintoDeBasePct)} %** de los escenarios comparables.
 - El sistema elige el **óptimo** del conjunto completo en el **${num(r.igualAlOptimoPct)} %** de los escenarios comparables.
 - **Grado de optimalidad:** promedio **${num(r.optimalidad.promedio)} %**, mediana ${num(r.optimalidad.mediana)} %, mínimo ${num(r.optimalidad.minimo)} %.

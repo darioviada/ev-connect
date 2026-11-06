@@ -183,7 +183,7 @@ describe('ejecución completa sobre la base (invariantes)', () => {
     for (const f of a.filas) {
       // La preselección nunca evalúa más de 8 candidatos
       expect(f.candidatosSistema).toBeLessThanOrEqual(8);
-      if (f.sistema && f.base && f.optimo) {
+      if (f.sistema && f.base && f.optimo && f.optimalidadPct !== null) {
         // La base es, por definición, la más cercana entre los factibles
         expect(f.base.criterioKm).toBeLessThanOrEqual(f.sistema.criterioKm + 1e-9);
         // El óptimo del conjunto completo tiene el puntaje máximo

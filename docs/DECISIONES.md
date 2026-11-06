@@ -296,28 +296,28 @@ Valores tal como los imprime `npm run validate` (mejora = (base − sistema) / b
 
 | Semilla | Comparables | Cercanía | Tiempo total | Costo | Elige distinto que la base | Igual al óptimo | Optimalidad prom. | Sin solución por preselección |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
-| 42 (oficial) | 186 | −12,3 % | +9,1 % | +0,6 % | 34,9 % | 44,6 % | 97,3 % | 0 |
-| 1 | 188 | −7,8 % | +10,1 % | −1,9 % | 30,3 % | 47,3 % | 96,9 % | 2 |
-| 7 | 185 | −9,8 % | +7,7 % | −2,0 % | 30,8 % | 48,1 % | 97,3 % | 1 |
-| 2026 | 190 | −6,0 % | +10,7 % | −1,2 % | 32,1 % | 45,3 % | 97,6 % | 1 |
-| 99 | 186 | −9,9 % | +4,4 % | +3,0 % | 34,9 % | 43,0 % | 97,4 % | 2 |
+| 42 (oficial) | 186 | −10,3 % | +7,9 % | +0,1 % | 33,3 % | 47,3 % | 97,4 % | 0 |
+| 1 | 188 | −6,4 % | +11,3 % | −2,9 % | 30,3 % | 50,5 % | 96,9 % | 2 |
+| 7 | 185 | −8,4 % | +7,8 % | −2,1 % | 30,3 % | 50,3 % | 97,6 % | 1 |
+| 2026 | 190 | −6,0 % | +10,7 % | −1,2 % | 32,1 % | 47,4 % | 97,6 % | 1 |
+| 99 | 186 | −8,4 % | +3,5 % | +2,5 % | 33,9 % | 44,1 % | 97,1 % | 2 |
 
-Tabla actualizada el 2026-11-06, después de D-045 (plan de viaje en modo ruta y cargadores de la RN 9 en el seed). Viajes largos de cada semilla (60 escenarios, ver D-045):
+Tabla actualizada el 2026-11-06, después de D-045 (plan de viaje en modo ruta y cargadores de la RN 9 en el seed) y D-046 (sin cargadores en sentido contrario). En las semillas 1 y 7 hay 1 escenario cada una en que la elección del sistema no tiene puntaje en el conjunto completo; queda fuera de la optimalidad (ver D-046). Viajes largos de cada semilla (60 escenarios, ver D-045):
 
 | Semilla | Viajes posibles: sistema / todos | Paradas (prom.) | Tiempo total: mejora frente a la base | Sistema sobre el mínimo |
 |---|---:|---:|---:|---:|
-| 42 (oficial) | 30 / 30 | 3,1 | +6,1 % | 3,0 % |
-| 1 | 26 / 26 | 2,5 | +3,5 % | 2,5 % |
-| 7 | 34 / 34 | 2,8 | +4,8 % | 2,9 % |
-| 2026 | 28 / 28 | 2,7 | +2,4 % | 5,5 % |
-| 99 | 24 / 24 | 2,3 | +1,8 % | 3,8 % |
+| 42 (oficial) | 30 / 30 | 3,0 | +6,0 % | 3,1 % |
+| 1 | 26 / 26 | 2,4 | +4,2 % | 2,4 % |
+| 7 | 34 / 34 | 2,7 | +4,9 % | 2,7 % |
+| 2026 | 28 / 28 | 2,7 | +2,0 % | 5,8 % |
+| 99 | 24 / 24 | 2,3 | +2,4 % | 3,4 % |
 
 **Lectura:**
-- **Tiempo total:** la mejora es consistente (entre +4 % y +11 %).
+- **Tiempo total:** la mejora es consistente (entre +3,5 % y +11,3 %).
 - **Cercanía:** siempre se cede algo (entre 6 % y 12 %), como corresponde por definición.
-- **Costo:** **en el total no hay una mejora consistente** (entre −2,0 % y +3,0 %). La mejora en costo aparece solo con urgencia baja, donde el costo pesa 50 %; con urgencia alta el costo empeora.
+- **Costo:** **en el total no hay una mejora consistente** (entre −2,9 % y +2,5 %). La mejora en costo aparece solo con urgencia baja, donde el costo pesa 50 %; con urgencia alta el costo empeora.
 - **Optimalidad:** se mantiene cerca del 97 %. Bajó unas décimas (y "igual al óptimo" de ~50 % a ~45 %) al sumar los cargadores de la RN 9; la causa está explicada en D-045.
-- **Viajes largos:** el sistema encuentra siempre un plan cuando existe. En tiempo total mejora a la base entre +1,8 % y +6,1 %, y queda entre 2,5 % y 5,5 % por encima del mínimo posible.
+- **Viajes largos:** el sistema encuentra siempre un plan cuando existe. En tiempo total mejora a la base entre +2,0 % y +6,0 %, y queda entre 2,4 % y 5,8 % por encima del mínimo posible.
 
 Hay que informar estos resultados tal como salen, con la semilla y la cantidad de escenarios.
 
@@ -485,3 +485,19 @@ Hay que informar estos resultados tal como salen, con la semilla y la cantidad d
 - Cada cargador conserva solo su mejor hora de llegada en Dijkstra: no compara llegadas más tardías con más batería.
 - Se minimiza el tiempo de llegada, no el costo.
 - Reservas cargadas desde ayer hasta pasado mañana: un viaje de más de dos días no ve reservas posteriores.
+
+### D-046 · Modo ruta: sin cargadores en sentido contrario al viaje (pedido del autor)
+- **Problema reportado:** buscando de Venta y Media 5267 (Córdoba) a Buenos Aires, la primera sugerencia fue el cargador de la Autopista a Carlos Paz (km 10). Está a 7 km de casa, pero en sentido contrario, y esas autopistas tienen pocos retornos.
+- **Diagnóstico** (reproducido con las distancias de Google guardadas en la caché, sin consultar a Google):
+  - Desde ese cargador, Buenos Aires queda **1,2 km más lejos** que desde el origen, y su desvío es de 8,2 km.
+  - Los cargadores cercanos que van hacia el destino (desvíos de 2 a 3 km) se habían descartado como `CARGA_INNECESARIA`: con esa batería conviene seguir de largo. Entre los que quedaban, el de la autopista era el "menos malo".
+  - El desvío real probablemente es mayor que el de Google. La matriz no sabe de qué lado de la autopista está el cargador, así que no ve el retorno.
+- **Decisión:** en modo ruta, un cargador desde el que el destino queda más de 0,5 km más lejos que desde el origen (`toleranciaSentidoContrarioKm`) está **en sentido contrario**.
+  - Se descarta con el motivo `SENTIDO_CONTRARIO` si hay al menos una opción hacia adelante.
+  - Si no hay ninguna, se mantiene con la advertencia "Queda en sentido contrario al viaje, pero no hay cargadores hacia adelante al alcance".
+  - Usa las distancias del RoutingProvider (por calles), no la línea recta: geométricamente ese cargador está casi a la par del origen. Lo que lo deja atrás es el camino.
+- **Además:** si todas las primeras paradas son de las que no necesitan carga, la tarjeta avisa dónde es la primera carga del plan.
+- **Validación:**
+  - En el informe se cuenta aparte el caso en que la elección del sistema no tiene puntaje en el conjunto completo, porque con todos los cargadores el motor la descarta (por ejemplo, entre los candidatos preseleccionados solo había cargadores en sentido contrario y por eso se mantuvo uno, mientras que en el conjunto completo hay opciones hacia adelante). Antes ese caso dejaba la optimalidad sin valor ("—"). Ocurre en 1 escenario de las semillas 1 y 7, en 0 de la 42.
+  - Con la semilla 42, en modo ruta, el desvío promedio baja de 0,94 a 0,67 km. El tiempo total sube de 66,0 a 71,1 min (sigue 20,6 % mejor que la base) y el costo pasa de −1,9 % a −3,8 % frente a la base. En el total: tiempo +7,9 % (antes +9,1 %), cercanía −10,3 % (antes −12,3 %). El modo ubicación no cambia.
+- **Mejora posible, no implementada:** la Routes API permite indicar en cada punto de paso el lado de la calle (`sideOfRoad`) y que es una parada del vehículo (`vehicleStopover`). Con coordenadas reales de cada cargador eso haría que Google cuente los retornos. Con los datos sintéticos no tiene sentido, porque la ubicación no está del lado correcto de ninguna calle. Antes de implementarlo hay que verificar la documentación vigente.

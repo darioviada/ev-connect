@@ -18,35 +18,36 @@
 - Escenarios: **200**. Con solución para el sistema y para la base: **186**.
 - Sin solución evaluando todos los cargadores: **14** (FUERA_DE_AUTONOMIA: 13, SIN_DISPONIBILIDAD: 1). En esos casos nadie podría recomendar nada: por ejemplo, batería insuficiente o sin cargadores compatibles disponibles.
 - Sin solución **solo por la preselección** (había un cargador factible fuera de los candidatos): **0**.
-- El sistema elige un cargador **distinto** que la línea base en el **34,9 %** de los escenarios comparables.
-- El sistema elige el **óptimo** del conjunto completo en el **44,6 %** de los escenarios comparables.
-- **Grado de optimalidad:** promedio **97,3 %**, mediana 99,5 %, mínimo 79,1 %.
+- El sistema eligió un cargador que, **evaluando todos los cargadores**, el motor descarta (por ejemplo, en sentido contrario al viaje cuando entre los candidatos no había otro, D-046): **0**. Esos casos no tienen puntaje en el conjunto completo y quedan fuera del grado de optimalidad.
+- El sistema elige un cargador **distinto** que la línea base en el **33,3 %** de los escenarios comparables.
+- El sistema elige el **óptimo** del conjunto completo en el **47,3 %** de los escenarios comparables.
+- **Grado de optimalidad:** promedio **97,4 %**, mediana 99,8 %, mínimo 76,1 %.
 
 ### Sistema frente a línea base
 
 | Métrica | Sistema (prom.) | Línea base (prom.) | Mejora del sistema | Sistema (mediana) | Línea base (mediana) | Sistema mejor / igual / peor |
 |---|---:|---:|---:|---:|---:|---:|
-| Cercanía: distancia (ubicación) o desvío (ruta), km | 3,3 | 3,0 | -12,3 % | 2,5 | 2,1 | 0 % / 65 % / 35 % |
-| Distancia del origen al cargador (km) | 5,7 | 6,7 | +15,1 % | 3,9 | 4,0 | 9 % / 65 % / 26 % |
-| Espera (min) | 1,8 | 4,4 | +59,6 % | 0,0 | 0,0 | 4 % / 96 % / 0 % |
-| Tiempo de carga (min) | 72,6 | 77,7 | +6,5 % | 39,1 | 38,4 | 13 % / 72 % / 15 % |
-| Tiempo total: viaje + espera + carga (min) | 83,9 | 92,3 | +9,1 % | 52,2 | 55,3 | 18 % / 65 % / 17 % |
-| Costo estimado (ARS) | 8.184,0 | 8.231,0 | +0,6 % | 4.796,0 | 5.396,5 | 25 % / 65 % / 10 % |
+| Cercanía: distancia (ubicación) o desvío (ruta), km | 3,3 | 3,0 | -10,3 % | 2,4 | 2,1 | 0 % / 67 % / 33 % |
+| Distancia del origen al cargador (km) | 6,1 | 6,7 | +8,9 % | 4,0 | 4,0 | 7 % / 67 % / 26 % |
+| Espera (min) | 2,3 | 4,4 | +47,5 % | 0,0 | 0,0 | 4 % / 96 % / 0 % |
+| Tiempo de carga (min) | 72,8 | 77,7 | +6,2 % | 39,1 | 38,4 | 12 % / 74 % / 15 % |
+| Tiempo total: viaje + espera + carga (min) | 85,0 | 92,3 | +7,9 % | 52,2 | 55,3 | 17 % / 67 % / 17 % |
+| Costo estimado (ARS) | 8.221,5 | 8.231,0 | +0,1 % | 4.796,0 | 5.396,5 | 23 % / 67 % / 10 % |
 
 ### Por urgencia
 
 | Grupo | Escenarios | Con solución | Cercanía, km: sistema / base (mejora) | Tiempo total, min: sistema / base (mejora) | Costo, ARS: sistema / base (mejora) | Elige distinto que la base | Optimalidad promedio |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| Urgencia alta | 64 | 50 | 2,94 / 2,88 (-2,1 %) | 133,9 / 157,7 (+15,1 %) | 17.011 / 15.901 (-7,0 %) | 18 % | 97,8 % |
-| Urgencia media | 74 | 74 | 3,21 / 3,04 (-5,7 %) | 84,5 / 92,2 (+8,3 %) | 7.804 / 8.092 (+3,6 %) | 30 % | 97,7 % |
-| Urgencia baja | 62 | 62 | 3,74 / 2,91 (-28,7 %) | 42,9 / 39,6 (-8,2 %) | 1.518 / 2.211 (+31,3 %) | 55 % | 96,4 % |
+| Urgencia alta | 64 | 50 | 2,94 / 2,88 (-2,1 %) | 133,9 / 157,7 (+15,1 %) | 17.011 / 15.901 (-7,0 %) | 18 % | 97,9 % |
+| Urgencia media | 74 | 74 | 3,12 / 3,04 (-2,7 %) | 87,2 / 92,2 (+5,3 %) | 7.893 / 8.092 (+2,5 %) | 26 % | 97,8 % |
+| Urgencia baja | 62 | 62 | 3,68 / 2,91 (-26,3 %) | 42,9 / 39,6 (-8,4 %) | 1.525 / 2.211 (+31,0 %) | 55 % | 96,4 % |
 
 ### Por modo de búsqueda
 
 | Grupo | Escenarios | Con solución | Cercanía, km: sistema / base (mejora) | Tiempo total, min: sistema / base (mejora) | Costo, ARS: sistema / base (mejora) | Elige distinto que la base | Optimalidad promedio |
 |---|---:|---:|---:|---:|---:|---:|---:|
 | Ubicación | 154 | 145 | 3,99 / 3,68 (-8,3 %) | 88,9 / 93,0 (+4,4 %) | 7.945 / 8.052 (+1,3 %) | 28 % | 97,4 % |
-| Ruta | 46 | 41 | 0,94 / 0,38 (-148,0 %) | 66,0 / 89,6 (+26,3 %) | 9.028 / 8.864 (-1,9 %) | 59 % | 96,9 % |
+| Ruta | 46 | 41 | 0,67 / 0,38 (-77,7 %) | 71,1 / 89,6 (+20,6 %) | 9.198 / 8.864 (-3,8 %) | 51 % | 97,1 % |
 
 
 ## Viajes largos con paradas (D-045)
@@ -60,9 +61,9 @@
 
 | Destino | Escenarios | Viaje posible: sistema / todos | Paradas (prom.) | Tiempo total, min: sistema / base (mejora) | Mínimo posible, min | Sistema sobre el mínimo |
 |---|---:|---:|---:|---:|---:|---:|
-| Todos | 60 | 30 / 30 | 3,1 | 554 / 590 (+6,1 %) | 538 | 3,0 % (mediana 0,0 %) |
+| Todos | 60 | 30 / 30 | 3,0 | 555 / 590 (+6,0 %) | 539 | 3,1 % (mediana 0,0 %) |
 | Rosario | 20 | 14 / 14 | 2,2 | 418 / 457 (+8,5 %) | 403 | 3,8 % (mediana 0,1 %) |
-| Buenos Aires | 20 | 16 / 16 | 3,8 | 672 / 706 (+4,7 %) | 656 | 2,2 % (mediana 0,0 %) |
+| Buenos Aires | 20 | 16 / 16 | 3,8 | 675 / 707 (+4,5 %) | 658 | 2,4 % (mediana 0,0 %) |
 | Mendoza | 20 | 0 / 0 | — | — / — (—) | — | — % (mediana — %) |
 
 Detalle por escenario en `resultados-viajes.csv`.

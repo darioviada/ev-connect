@@ -151,7 +151,7 @@ async function main() {
       `\nListo en ${((performance.now() - inicio) / 1000).toFixed(1)} s. Resumen (sistema vs. línea base, promedios):`,
     );
     console.log(
-      `  comparables ${s.comparables}/${s.escenarios} · sin solución ${s.sinSolucionCompleto} · sin solución por preselección ${s.sinSolucionPorPreseleccion}`,
+      `  comparables ${s.comparables}/${s.escenarios} · sin solución ${s.sinSolucionCompleto} · sin solución por preselección ${s.sinSolucionPorPreseleccion} · elección descartada con todos los cargadores ${s.sistemaDescartadoEnCompleto}`,
     );
     for (const k of ['criterioKm', 'distanciaKm', 'totalMin', 'costo']) {
       console.log(

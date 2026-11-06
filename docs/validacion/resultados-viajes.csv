@@ -2,8 +2,8 @@ id,vehiculo,conector,bateriaPct,destino,distanciaKm,llegaSinCargar,sinSolucionSi
 1,Nissan Leaf,CHADEMO,36,Rosario,441.5,false,VIAJE_NO_POSIBLE,VIAJE_NO_POSIBLE,,,,,
 2,BYD Yuan Plus,CCS_COMBO,44,Buenos Aires,745.5,false,,,3,619.6,81668,619.6,619.6
 3,BYD Seal,CCS_COMBO,23,Mendoza,529.7,false,VIAJE_NO_POSIBLE,VIAJE_NO_POSIBLE,,,,,
-4,BYD Yuan Plus,CCS_COMBO,81,Rosario,437,false,,,2,359.9,24044,359.9,357.7
-5,Renault Kwid E-Tech,CCS_COMBO,100,Buenos Aires,742.5,false,,,5,722.9,52342,718.7,718.7
+4,BYD Yuan Plus,CCS_COMBO,81,Rosario,437,false,,,2,359.9,24044,359.9,357.8
+5,Renault Kwid E-Tech,CCS_COMBO,100,Buenos Aires,742.5,false,,,5,722.9,52342,722.9,722.9
 6,BYD Seal,CCS_COMBO,45,Mendoza,541.6,false,VIAJE_NO_POSIBLE,VIAJE_NO_POSIBLE,,,,,
 7,Nissan Leaf,CHADEMO,28,Rosario,427.2,false,VIAJE_NO_POSIBLE,VIAJE_NO_POSIBLE,,,,,
 8,BYD Dolphin Mini,CCS_COMBO,97,Buenos Aires,744.4,false,,,3,673.4,50436,673.4,673.4
@@ -12,7 +12,7 @@ id,vehiculo,conector,bateriaPct,destino,distanciaKm,llegaSinCargar,sinSolucionSi
 11,Nissan Leaf,CHADEMO,97,Buenos Aires,739.4,false,VIAJE_NO_POSIBLE,VIAJE_NO_POSIBLE,,,,,
 12,BYD Seal,CCS_COMBO,83,Mendoza,536.7,false,VIAJE_NO_POSIBLE,VIAJE_NO_POSIBLE,,,,,
 13,BYD Dolphin Mini,CCS_COMBO,84,Rosario,436.3,false,,,2,402.5,24211,504.4,402.5
-14,BYD Dolphin Mini,CCS_COMBO,34,Buenos Aires,751.4,false,,,4,707.5,69682,839,699.6
+14,BYD Dolphin Mini,CCS_COMBO,34,Buenos Aires,751.4,false,,,4,707.5,69682,839,706.7
 15,Peugeot e-208,CCS_COMBO,82,Mendoza,543.7,false,VIAJE_NO_POSIBLE,VIAJE_NO_POSIBLE,,,,,
 16,Nissan Leaf,CHADEMO,47,Rosario,437.3,false,VIAJE_NO_POSIBLE,VIAJE_NO_POSIBLE,,,,,
 17,Volvo EX30,CCS_COMBO,78,Buenos Aires,745.4,false,,,3,582.9,69708,582.9,582.9
@@ -20,14 +20,14 @@ id,vehiculo,conector,bateriaPct,destino,distanciaKm,llegaSinCargar,sinSolucionSi
 19,Renault Kwid E-Tech,CCS_COMBO,61,Rosario,430.3,false,,,3,438,36706,438,438
 20,Modelo ficticio Urbano T2 (ficticio),TIPO_2,62,Buenos Aires,737.6,false,SIN_DISPONIBILIDAD,SIN_DISPONIBILIDAD,,,,,
 21,Volvo EX30,CCS_COMBO,33,Mendoza,541.4,false,VIAJE_NO_POSIBLE,VIAJE_NO_POSIBLE,,,,,
-22,Peugeot e-208,CCS_COMBO,20,Rosario,435.4,false,,,2,376.2,51828,376.1,376.1
+22,Peugeot e-208,CCS_COMBO,20,Rosario,435.4,false,,,2,376.1,53745,376.1,376.1
 23,Peugeot e-208,CCS_COMBO,88,Buenos Aires,743.1,false,,,3,588.6,66466,588.6,588.6
 24,Volvo EX30,CCS_COMBO,24,Mendoza,541.4,false,VIAJE_NO_POSIBLE,VIAJE_NO_POSIBLE,,,,,
 25,Modelo ficticio Urbano T2 (ficticio),TIPO_2,67,Rosario,436.2,false,,,3,688.9,16966,717,688.9
-26,BYD Dolphin Mini,CCS_COMBO,71,Buenos Aires,738.5,false,,,4,670.9,57425,670.9,670.9
+26,BYD Dolphin Mini,CCS_COMBO,71,Buenos Aires,738.5,false,,,3,684.9,57470,684.9,684.9
 27,Volvo EX30,CCS_COMBO,56,Mendoza,537.5,false,VIAJE_NO_POSIBLE,VIAJE_NO_POSIBLE,,,,,
 28,Nissan Leaf,CHADEMO,54,Rosario,433.5,false,VIAJE_NO_POSIBLE,VIAJE_NO_POSIBLE,,,,,
-29,Peugeot e-208,CCS_COMBO,72,Buenos Aires,741.5,false,,,3,587.8,72879,587.8,587.8
+29,Peugeot e-208,CCS_COMBO,72,Buenos Aires,741.5,false,,,3,619.4,73443,595.1,595.1
 30,Modelo ficticio Urbano T2 (ficticio),TIPO_2,82,Mendoza,535.8,false,VIAJE_NO_POSIBLE,VIAJE_NO_POSIBLE,,,,,
 31,Peugeot e-208,CCS_COMBO,45,Rosario,437.5,false,,,2,483.1,35947,482.8,371
 32,Peugeot e-208,CCS_COMBO,41,Buenos Aires,749.5,false,,,4,643.5,81623,643.5,627

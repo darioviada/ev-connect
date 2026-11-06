@@ -103,8 +103,13 @@ export function analizarEscenario(
 
   const eleccionSistema = recSistema ? aEleccion(recSistema, porId, escenario.modo) : null;
   const eleccionOptimo = recOptimo ? aEleccion(recOptimo, porId, escenario.modo) : null;
+  // Si la elección del sistema no está entre los factibles del conjunto completo (el motor la descarta con
+  // toda la información, p. ej. en sentido contrario), no tiene puntaje: se cuenta aparte (D-046).
   const optimalidadPct =
-    eleccionSistema && eleccionOptimo && eleccionOptimo.scoreConjuntoCompleto > 0
+    eleccionSistema &&
+    eleccionOptimo &&
+    Number.isFinite(eleccionSistema.scoreConjuntoCompleto) &&
+    eleccionOptimo.scoreConjuntoCompleto > 0
       ? (eleccionSistema.scoreConjuntoCompleto / eleccionOptimo.scoreConjuntoCompleto) * 100
       : null;
 
@@ -169,6 +174,8 @@ export interface Resumen {
   sinSolucionCompleto: number;
   /** Hay solución evaluando todos los cargadores, pero no dentro de la preselección. */
   sinSolucionPorPreseleccion: number;
+  /** El sistema eligió un cargador que el motor descarta evaluando todos los cargadores. */
+  sistemaDescartadoEnCompleto: number;
   distintoDeBasePct: number;
   igualAlOptimoPct: number;
   optimalidad: { promedio: number; mediana: number; minimo: number };
@@ -213,6 +220,9 @@ export function resumir(filas: readonly FilaEscenario[]): Resumen {
     sinSolucionCompleto: filas.filter((f) => f.sinSolucionCompleto).length,
     sinSolucionPorPreseleccion: filas.filter((f) => f.sinSolucionSistema && !f.sinSolucionCompleto)
       .length,
+    sistemaDescartadoEnCompleto: filas.filter(
+      (f) => f.sistema && !Number.isFinite(f.sistema.scoreConjuntoCompleto),
+    ).length,
     distintoDeBasePct: pct(
       comparables.filter((f) => f.sistema!.id !== f.base!.id).length,
       comparables.length,
