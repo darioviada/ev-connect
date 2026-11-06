@@ -3,6 +3,7 @@ export { CONFIG_MOTOR, type ConfigMotor } from './config.js';
 export { evaluarDisponibilidad, proximoInicioEnHorario } from './disponibilidad.js';
 export { recomendar, type EntradaMotor } from './recomendar.js';
 export {
+  alcanceMaximoKm,
   autonomiaKm,
   esAlcanzable,
   esCompatible,

@@ -109,7 +109,7 @@ export default function ResultadosMapa() {
             {busqueda.modo === 'ruta' && (
               <p className={s.leyenda}>
                 {r.trazado
-                  ? `Recorrido por calles: ${r.trazado.distanciaKm.toLocaleString('es-AR')} km, ~${r.trazado.duracionMin} min (Google, sin tráfico).`
+                  ? `Recorrido total hasta el destino: ${r.trazado.distanciaKm.toLocaleString('es-AR')} km, ~${r.trazado.duracionMin} min (Google, sin tráfico).`
                   : 'Línea recta entre origen y destino: el modo offline no calcula el recorrido por calles.'}
               </p>
             )}

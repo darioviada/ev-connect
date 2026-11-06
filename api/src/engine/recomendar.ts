@@ -2,6 +2,7 @@
 import { CONFIG_MOTOR, type ConfigMotor } from './config.js';
 import { evaluarDisponibilidad } from './disponibilidad.js';
 import {
+  alcanceMaximoKm,
   autonomiaKm,
   esAlcanzable,
   esCompatible,
@@ -108,7 +109,7 @@ export function recomendar(entrada: EntradaMotor): ResultadoMotor {
       descartar(
         c,
         'FUERA_DE_AUTONOMIA',
-        `A ${r1(c.desdeOrigen.distanciaKm)} km; autonomía útil ${r1(autonomiaKm(vehiculo, bateriaPct) * config.margenSeguridad)} km.`,
+        `A ${r1(c.desdeOrigen.distanciaKm)} km; con la batería actual se llega a ${r1(alcanceMaximoKm(vehiculo, bateriaPct, config))} km como máximo.`,
       );
     }
     return ok;

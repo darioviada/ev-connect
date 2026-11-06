@@ -1,4 +1,4 @@
-// Tarjeta de un cargador recomendado: distancia (o desvío), conector, potencia, disponibilidad, tiempo y costo.
+// Tarjeta de un cargador recomendado: distancia (y desvío en modo ruta), conector, potencia, disponibilidad, tiempo y costo.
 import type { Recomendacion } from '../../api/tipos';
 import { disponibilidad, km, kw, minutos, nombreConector, pesos } from '../../dominio/formato';
 import { Insignia, TarjetaEnlace } from '../ui';
@@ -17,7 +17,9 @@ export function TarjetaRecomendacion({
 }) {
   const m = rec.metricas;
   const distancia =
-    modo === 'ruta' && m.desvioKm !== undefined ? `Desvío ${km(m.desvioKm)}` : km(m.distanciaKm);
+    modo === 'ruta' && m.desvioKm !== undefined
+      ? `A ${km(m.distanciaKm)} · desvío ${km(m.desvioKm)}`
+      : km(m.distanciaKm);
   const datos = compacta
     ? [
         distancia,

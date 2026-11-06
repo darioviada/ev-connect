@@ -49,6 +49,20 @@ export function esAlcanzable(
   );
 }
 
+/**
+ * Distancia máxima alcanzable con la batería actual: la menor entre la autonomía con margen de seguridad
+ * y la distancia que deja el SoC de llegada en el mínimo. Es la inversa exacta de `esAlcanzable`.
+ */
+export function alcanceMaximoKm(
+  vehiculo: VehiculoMotor,
+  bateriaPct: number,
+  config: Pick<ConfigMotor, 'margenSeguridad' | 'socMinimoLlegadaPct'>,
+): number {
+  const porMargen = autonomiaKm(vehiculo, bateriaPct) * config.margenSeguridad;
+  const porSocMinimo = autonomiaKm(vehiculo, Math.max(0, bateriaPct - config.socMinimoLlegadaPct));
+  return Math.min(porMargen, porSocMinimo);
+}
+
 /** Potencia efectiva = eficiencia × min(potencia del cargador, límite del vehículo para ese tipo de carga). */
 export function potenciaEfectivaKw(
   vehiculo: VehiculoMotor,

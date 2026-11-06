@@ -1,7 +1,8 @@
 // POST /recomendaciones de punta a punta con el seed (preselección espacial + proveedor offline + motor).
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { uuidDeterministico } from '../../seeds/aleatorio.js';
-import { OfflineProvider } from '../../src/routing/index.js';
+import { preseleccionar } from '../../src/modules/recomendaciones/preseleccion.js';
+import { haversineM, OfflineProvider } from '../../src/routing/index.js';
 import { appDePrueba } from '../helpers.js';
 import { cliente, prepararContextoApi, tokenSeed, type ContextoApi } from './contexto.js';
 
@@ -186,6 +187,57 @@ describe('modo ruta (Córdoba → Villa Carlos Paz)', () => {
     const evaluados = [...r.recomendaciones.map((x: { cargador: unknown }) => x.cargador)];
     const lngs = evaluados.map((c: { ubicacion: { lng: number } }) => c.ubicacion.lng);
     expect(Math.min(...lngs)).toBeLessThan(-64.3);
+  });
+
+  it('con poca batería solo ofrece cargadores alcanzables: el primer tramo entra en la autonomía (D-044)', async () => {
+    // Volvo EX30 al 10 %: 38,3 km de autonomía, pero llegar con ≥ 5 % limita el alcance a ~19,2 km.
+    const res = await buscar({
+      vehiculo: modelo('volvo-ex30'),
+      bateriaPct: 10,
+      modo: 'ruta',
+      origen: CENTRO,
+      destino: CARLOS_PAZ,
+    });
+    expect(res.status).toBe(200);
+    const r = res.body;
+    expect(r.recomendaciones.length).toBeGreaterThan(0);
+    for (const rec of r.recomendaciones) {
+      expect(rec.metricas.distanciaKm).toBeLessThanOrEqual(19.2);
+      expect(rec.metricas.socLlegadaPct).toBeGreaterThanOrEqual(5);
+    }
+  });
+
+  it('la preselección con alcance deja afuera lo que está más lejos (en línea recta) que el alcance', async () => {
+    const base = {
+      modo: 'ruta' as const,
+      origen: CENTRO,
+      destino: CARLOS_PAZ,
+      conectores: ['CCS_COMBO', 'TIPO_2'] as const,
+      radioKm: 10,
+      corredorKm: 5,
+      limite: 8,
+    };
+    const sinAlcance = await preseleccionar(ctx.db, base);
+    const conAlcance = await preseleccionar(ctx.db, { ...base, alcanceKm: 12 });
+    const lejos = (f: { lat: number; lng: number }) => haversineM(CENTRO, f) > 12_000;
+    expect(sinAlcance.filas.some(lejos)).toBe(true); // sin límite entran los de Carlos Paz
+    expect(conAlcance.filas.length).toBeGreaterThan(0);
+    expect(conAlcance.filas.some(lejos)).toBe(false);
+  });
+
+  it('si ningún cargador es alcanzable lo informa con el detalle de los descartados', async () => {
+    const res = await buscar({
+      vehiculo: modelo('volvo-ex30'),
+      bateriaPct: 5,
+      modo: 'ruta',
+      origen: CENTRO,
+      destino: CARLOS_PAZ,
+    });
+    expect(res.status).toBe(200);
+    expect(res.body.recomendaciones).toEqual([]);
+    expect(res.body.sinResultados.codigo).toBe('FUERA_DE_AUTONOMIA');
+    expect(res.body.descartados.length).toBeGreaterThan(0);
+    expect(res.body.descartados[0].detalle).toMatch(/se llega a 0 km como máximo/);
   });
 
   it('con el proveedor offline no hay trazado (la interfaz dibuja una recta)', async () => {

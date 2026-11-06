@@ -3,7 +3,8 @@
 // el mismo camino que recorre la API).
 import type { Knex } from 'knex';
 import { recomendar } from '../../engine/recomendar.js';
-import { esCompatible } from '../../engine/reglas.js';
+import { CONFIG_MOTOR } from '../../engine/config.js';
+import { alcanceMaximoKm, esCompatible } from '../../engine/reglas.js';
 import type {
   CandidatoMotor,
   LatLng,
@@ -156,7 +157,18 @@ export async function calcularRecomendacion(
     corredorKm: ctx.engine.corridorKm,
     limite: ctx.engine.candidatesLimit,
   };
-  let preseleccion = await preseleccionar(ctx.db, { ...parametros, conectores: compatibles });
+  // En ruta, los lugares de la preselección se usan solo en cargadores alcanzables (D-044).
+  let preseleccion = await preseleccionar(ctx.db, {
+    ...parametros,
+    conectores: compatibles,
+    ...(pedido.modo === 'ruta'
+      ? { alcanceKm: alcanceMaximoKm(pedido.vehiculo, pedido.bateriaPct, CONFIG_MOTOR) }
+      : {}),
+  });
+  if (preseleccion.filas.length === 0 && pedido.modo === 'ruta') {
+    // Ninguno alcanzable: se traen igual para que el motor informe FUERA_DE_AUTONOMIA con detalle.
+    preseleccion = await preseleccionar(ctx.db, { ...parametros, conectores: compatibles });
+  }
   if (preseleccion.filas.length === 0) {
     // Sin compatibles: se traen los cercanos para que el motor informe SIN_COMPATIBLES.
     preseleccion = await preseleccionar(ctx.db, { ...parametros, conectores: CONECTORES });

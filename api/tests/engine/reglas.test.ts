@@ -1,6 +1,7 @@
 // Reglas del motor (SPEC §6.2–§6.4) y scoring (§6.5).
 import { describe, expect, it } from 'vitest';
 import {
+  alcanceMaximoKm,
   autonomiaKm,
   CONFIG_MOTOR,
   esAlcanzable,
@@ -77,6 +78,17 @@ describe('alcance con margen de seguridad del 10 % y SoC mínimo de 5 %', () => 
     expect(socLlegadaPct(VEHICULO_CCS, 30, 62.5)).toBe(5);
     expect(esAlcanzable(VEHICULO_CCS, 30, 62.5, CONFIG_MOTOR)).toBe(true);
     expect(esAlcanzable(VEHICULO_CCS, 30, 63, CONFIG_MOTOR)).toBe(false);
+  });
+
+  it('alcanceMaximoKm es el límite exacto de esAlcanzable', () => {
+    expect(alcanceMaximoKm(VEHICULO_CCS, 50, CONFIG_MOTOR)).toBeCloseTo(112.5); // manda el margen
+    expect(alcanceMaximoKm(VEHICULO_CCS, 30, CONFIG_MOTOR)).toBeCloseTo(62.5); // manda el SoC mínimo
+    expect(alcanceMaximoKm(VEHICULO_CCS, 3, CONFIG_MOTOR)).toBe(0);
+    for (const bateria of [8, 10, 30, 50, 90]) {
+      const alcance = alcanceMaximoKm(VEHICULO_CCS, bateria, CONFIG_MOTOR);
+      expect(esAlcanzable(VEHICULO_CCS, bateria, alcance - 0.01, CONFIG_MOTOR)).toBe(true);
+      expect(esAlcanzable(VEHICULO_CCS, bateria, alcance + 0.01, CONFIG_MOTOR)).toBe(false);
+    }
   });
 
   it('con batería 0 % solo es alcanzable un cargador a 0 km si el SoC mínimo lo permite', () => {
