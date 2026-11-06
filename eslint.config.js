@@ -8,7 +8,8 @@ import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
 export default defineConfig([
-  globalIgnores(['**/dist', '**/coverage', '**/node_modules']),
+  // video/ es un proyecto aparte (Remotion), con su propio package.json
+  globalIgnores(['**/dist', '**/coverage', '**/node_modules', 'video/**']),
   js.configs.recommended,
   tseslint.configs.recommended,
   {

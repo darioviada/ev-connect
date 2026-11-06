@@ -5,3 +5,5 @@ package-lock.json
 # Documentación escrita por el autor: no se reformatea
 docs/
 CLAUDE.md
+video/out
+video/public

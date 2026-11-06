@@ -22,3 +22,6 @@ Thumbs.db
 # Pruebas E2E (P2)
 playwright-report/
 test-results/
+
+# Video demo (Remotion): renders
+video/out/
