@@ -188,4 +188,33 @@ describe('recomendar en modo ruta con plan de viaje', () => {
       expect.objectContaining({ cargadorId: 'a', motivo: 'CARGA_INNECESARIA' }),
     ]);
   });
+
+  it('descarta cargadores en sentido contrario al viaje si hay opciones hacia adelante (D-046)', () => {
+    // 'atras' queda 5 km hacia el lado opuesto: desde ahí el destino está 5 km más lejos
+    const atras = candidato(rapido('atras', -5).cargador, {
+      km: 5,
+      min: 5,
+      alDestino: { km: 105, min: 105 },
+    });
+    const r = recomendar(
+      entrada([atras, primera('adelante', 20, 100)], { bateriaPct: 90, ...ruta(100) }),
+    );
+    expect(r.recomendaciones.map((x) => x.cargador.id)).toEqual(['adelante']);
+    expect(r.descartados).toEqual([
+      expect.objectContaining({ cargadorId: 'atras', motivo: 'SENTIDO_CONTRARIO' }),
+    ]);
+    expect(r.descartados[0]!.detalle).toMatch(/5 km más lejos/);
+  });
+
+  it('si solo hay cargadores en sentido contrario, los mantiene con una advertencia', () => {
+    const atras = candidato(rapido('atras', -5).cargador, {
+      km: 5,
+      min: 5,
+      alDestino: { km: 105, min: 105 },
+    });
+    const r = recomendar(entrada([atras], { bateriaPct: 90, ...ruta(100) }));
+    expect(r.recomendaciones[0]!.advertencias).toContain(
+      'Queda en sentido contrario al viaje, pero no hay cargadores hacia adelante al alcance.',
+    );
+  });
 });

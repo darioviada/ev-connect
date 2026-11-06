@@ -334,8 +334,8 @@ describe('modo ruta', () => {
         [
           // sobre el camino: 15 + 25 = 40 → desvío 0
           candidato(cargador('en-ruta'), { km: 15, min: 15, alDestino: { km: 25, min: 25 } }),
-          // más cerca del origen pero fuera del camino: 3 + 45 = 48 → desvío 8
-          candidato(cargador('fuera'), { km: 3, min: 5, alDestino: { km: 45, min: 42 } }),
+          // al costado del camino (sin alejarse del destino): 10 + 38 = 48 → desvío 8
+          candidato(cargador('fuera'), { km: 10, min: 12, alDestino: { km: 38, min: 35 } }),
         ],
         { ...ruta, bateriaPct: 15 },
       ),

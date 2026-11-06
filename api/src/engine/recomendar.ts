@@ -179,8 +179,35 @@ export function recomendar(entrada: EntradaMotor): ResultadoMotor {
     if ('detalle' in resultado) descartar(c, 'SIN_DISPONIBILIDAD', resultado.detalle);
     else evaluados.push(resultado);
   }
+  // Modo ruta (D-046): un cargador desde el que el destino queda más lejos que desde el origen está en
+  // sentido contrario al viaje (obliga a volver, y en autopistas los retornos son escasos). Se descarta si
+  // hay opciones hacia adelante; si no las hay, se mantiene con una advertencia.
+  if (entrada.modo === 'ruta') {
+    const directoKm = entrada.trayectoDirecto!.distanciaKm;
+    const atrasKm = (e: Evaluado) => e.candidato.haciaDestino!.distanciaKm - directoKm;
+    const enContra = (e: Evaluado) => atrasKm(e) > config.toleranciaSentidoContrarioKm;
+    if (evaluados.some(enContra)) {
+      if (evaluados.every(enContra)) {
+        for (const e of evaluados) {
+          e.advertencias.push(
+            'Queda en sentido contrario al viaje, pero no hay cargadores hacia adelante al alcance.',
+          );
+        }
+      } else {
+        for (const e of evaluados.filter(enContra)) {
+          descartar(
+            e.candidato,
+            'SENTIDO_CONTRARIO',
+            `Queda en sentido contrario al viaje: desde ahí el destino está ${r1(atrasKm(e))} km más lejos que desde el origen.`,
+          );
+        }
+        evaluados.splice(0, evaluados.length, ...evaluados.filter((e) => !enContra(e)));
+      }
+    }
+  }
+
   // Con plan, una "primera parada" donde no hace falta cargar no es una recomendación útil: el plan
-  // sigue de largo. Se descarta si hay otras opciones.
+  // sigue de largo. Se descarta si hay otras opciones; si todas son así, se avisa dónde es la primera carga.
   const sinCarga = (e: Evaluado) => e.plan !== undefined && e.metricas.energiaKwh < 0.1;
   if (evaluados.some(sinCarga) && !evaluados.every(sinCarga)) {
     for (const e of evaluados.filter(sinCarga)) {
@@ -194,6 +221,15 @@ export function recomendar(entrada: EntradaMotor): ResultadoMotor {
       );
     }
     evaluados.splice(0, evaluados.length, ...evaluados.filter((e) => !sinCarga(e)));
+  } else {
+    for (const e of evaluados.filter(sinCarga)) {
+      const siguiente = e.plan!.paradas[1]?.cargador.nombre;
+      if (siguiente) {
+        e.advertencias.push(
+          `No hace falta cargar acá: la primera carga del plan es en ${siguiente}.`,
+        );
+      }
+    }
   }
   if (evaluados.length === 0) {
     if (mejorIntento) {

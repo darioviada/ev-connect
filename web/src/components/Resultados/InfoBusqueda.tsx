@@ -18,6 +18,7 @@ const MOTIVOS: Record<string, string> = {
   SIN_DISPONIBILIDAD: 'sin disponibilidad',
   VIAJE_NO_POSIBLE: 'desde acá no se completa el viaje',
   CARGA_INNECESARIA: 'no hace falta cargar acá',
+  SENTIDO_CONTRARIO: 'en sentido contrario al viaje',
 };
 
 export function ResumenBusqueda({

@@ -32,6 +32,11 @@ export interface ConfigMotor {
   avanceMinimoKm: number;
   /** Costo fijo de cada parada extra al comparar planes (min); no se suma a los tiempos informados. */
   penalidadParadaMin: number;
+  /**
+   * Modo ruta (D-046): un cargador desde el que el destino queda más de esto (km) más lejos que desde el
+   * origen está en sentido contrario al viaje.
+   */
+  toleranciaSentidoContrarioKm: number;
 }
 
 export const CONFIG_MOTOR: ConfigMotor = {
@@ -52,4 +57,5 @@ export const CONFIG_MOTOR: ConfigMotor = {
   margenCargaViajePct: 10,
   avanceMinimoKm: 5,
   penalidadParadaMin: 10,
+  toleranciaSentidoContrarioKm: 0.5,
 };

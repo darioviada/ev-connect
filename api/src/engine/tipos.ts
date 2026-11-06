@@ -74,7 +74,8 @@ export type MotivoDescarte =
   | 'FUERA_DE_AUTONOMIA'
   | 'SIN_DISPONIBILIDAD'
   | 'VIAJE_NO_POSIBLE'
-  | 'CARGA_INNECESARIA';
+  | 'CARGA_INNECESARIA'
+  | 'SENTIDO_CONTRARIO';
 
 export interface Descarte {
   cargadorId: string;
