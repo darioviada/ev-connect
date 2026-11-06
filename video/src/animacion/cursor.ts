@@ -40,3 +40,25 @@ export function ventana(frame: number, duracion: number, desde: number, hasta: n
     extrapolateRight: 'clamp',
   });
 }
+
+/** Progreso (0 a 1) de un toque que empieza en la fracción `t` de la escena y dura `frames`. */
+export function toque(frame: number, duracion: number, t: number, frames = 14) {
+  const inicio = t * duracion;
+  if (frame < inicio || frame > inicio + frames) return 0;
+  return (frame - inicio) / frames;
+}
+
+/** Texto que se va tipeando entre dos fracciones de la escena. */
+export function tipeado(
+  texto: string,
+  frame: number,
+  duracion: number,
+  desde: number,
+  hasta: number,
+) {
+  const p = Math.min(1, Math.max(0, (frame - desde * duracion) / ((hasta - desde) * duracion)));
+  return texto.slice(0, Math.round(p * texto.length));
+}
+
+/** Cursor de texto que parpadea (medio segundo encendido, medio apagado a 30 fps). */
+export const parpadeo = (frame: number) => (Math.floor(frame / 15) % 2 === 0 ? 1 : 0);

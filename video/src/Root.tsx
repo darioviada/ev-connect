@@ -12,6 +12,7 @@ import {
 } from './config/escenas';
 import { Escena01Apertura } from './escenas/Escena01Apertura';
 import { Escena02Roles } from './escenas/Escena02Roles';
+import { Escena03Acceso } from './escenas/Escena03Acceso';
 import { Pendiente } from './escenas/Pendiente';
 
 cargarFuentes();
@@ -20,6 +21,7 @@ cargarFuentes();
 const COMPONENTES: Partial<Record<string, ComponentType>> = {
   apertura: Escena01Apertura,
   roles: Escena02Roles,
+  acceso: Escena03Acceso,
 };
 
 function EscenaDe({ escena }: { escena: TramoEscena }) {
