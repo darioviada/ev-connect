@@ -43,6 +43,7 @@ buscar sin iniciar sesión.
 - **Viajes largos** (modo ruta): si con la batería no se llega al destino, cada opción trae su **plan de viaje** con las paradas siguientes y cuánto cargar en cada una. Si no hay forma de completar el viaje, se avisa y se indica dónde se corta. Para probarlo: Córdoba → Buenos Aires (cargadores sintéticos sobre la RN 9) y Córdoba → Mendoza (sin cargadores en el medio).
 - **Reservas** sin solapamientos (409), dentro del horario del cargador. En cargadores privados quedan pendientes hasta que el dueño las acepta.
 - **Red colaborativa:** publicar y administrar cargadores propios (ubicación, conector, potencia, precio y franjas horarias).
+- **Fotos del catálogo** (Wikimedia Commons, con crédito) que el administrador puede reemplazar.
 - **Mis vehículos**, favoritos y rutas guardadas. **Administración** de usuarios, cargadores y catálogo.
 - **Autenticación** local (JWT, solo demo) o Amazon Cognito, detrás de una interfaz única. La autorización se verifica siempre en la API.
 

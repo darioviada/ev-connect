@@ -373,6 +373,7 @@ Hay que informar estos resultados tal como salen, con la semilla y la cantidad d
 14. **Arquitectura de despliegue:** una sola imagen que sirve API y web, sin S3 ni CloudFront (D-038; coincide con MANUAL_TASKS F).
 15. **Validación:** método y resultados en D-036 y D-037, y en `docs/validacion/resultados.md`. Copiar al informe **solo** esos números, con la semilla y la cantidad de escenarios.
 16. **Plan de viaje con varias paradas en modo ruta** (D-045): el SPEC §2 lo dejaba fuera de alcance; se agregó a pedido del autor. Agrega los motivos `VIAJE_NO_POSIBLE` y `CARGA_INNECESARIA`, el campo `plan` de cada recomendación y el resumen `viaje` de la respuesta.
+17. **Fotos del catálogo** (D-047): tabla nueva `vehiculo_foto` (1 a 0..1 con `vehiculo_modelo`) y endpoints para servir, subir y quitar la foto.
 
 ## 2026-11-06 — Búsqueda de direcciones exactas (pedido del autor)
 
@@ -501,3 +502,34 @@ Hay que informar estos resultados tal como salen, con la semilla y la cantidad d
   - En el informe se cuenta aparte el caso en que la elección del sistema no tiene puntaje en el conjunto completo, porque con todos los cargadores el motor la descarta (por ejemplo, entre los candidatos preseleccionados solo había cargadores en sentido contrario y por eso se mantuvo uno, mientras que en el conjunto completo hay opciones hacia adelante). Antes ese caso dejaba la optimalidad sin valor ("—"). Ocurre en 1 escenario de las semillas 1 y 7, en 0 de la 42.
   - Con la semilla 42, en modo ruta, el desvío promedio baja de 0,94 a 0,67 km. El tiempo total sube de 66,0 a 71,1 min (sigue 20,6 % mejor que la base) y el costo pasa de −1,9 % a −3,8 % frente a la base. En el total: tiempo +7,9 % (antes +9,1 %), cercanía −10,3 % (antes −12,3 %). El modo ubicación no cambia.
 - **Mejora posible, no implementada:** la Routes API permite indicar en cada punto de paso el lado de la calle (`sideOfRoad`) y que es una parada del vehículo (`vehicleStopover`). Con coordenadas reales de cada cargador eso haría que Google cuente los retornos. Con los datos sintéticos no tiene sentido, porque la ubicación no está del lado correcto de ninguna calle. Antes de implementarlo hay que verificar la documentación vigente.
+
+## 2026-11-06 — Fotos de los vehículos del catálogo (pedido del autor)
+
+### D-047 · Fotos de Wikimedia Commons y carga desde la administración
+- **Pedido:** que los modelos del catálogo tengan una foto real. El autor eligió "Commons + subida del administrador" entre las opciones evaluadas:
+  - Wikimedia Commons guardada en el repositorio.
+  - Enlace directo a Commons.
+  - Solo subida del administrador.
+  - APIs comerciales (Imagin.studio, CarsXE). Se descartaron porque requieren cuenta o clave.
+  - Fotos de prensa de las marcas. Se descartaron por tener copyright.
+- **Fotos iniciales:**
+  - 7 fotos de Wikimedia Commons, todas **CC BY-SA 4.0**, a 800 px. La licencia se verificó en la página de cada archivo, con un único pedido a la API de Commons y descargas espaciadas, según su política de uso.
+  - Tres modelos tienen foto del gemelo europeo (Dolphin Surf, Dacia Spring, Atto 3), y el crédito lo aclara.
+  - El modelo ficticio usa un dibujo genérico.
+  - Créditos en `docs/LICENCIAS.md` y en la interfaz.
+- **Almacenamiento en la base:** tabla `vehiculo_foto` (`bytea`, tipo MIME, crédito, enlace a la fuente, fecha), separada de `vehiculo_modelo` para que el listado del catálogo no cargue imágenes. El contenedor sigue sin estado: en AWS la foto vive en RDS con el resto de los datos, sin S3 ni volúmenes.
+- **API:**
+  - `GET /vehiculos-modelo/:id/foto`: pública, con caché del navegador. El JSON del catálogo trae `fotoUrl` con la fecha como versión, más `fotoCredito` y `fotoFuenteUrl`.
+  - `PUT /admin/vehiculos-modelo/:id/foto`: solo admin. El cuerpo es la imagen; crédito y fuente van como parámetros.
+  - `DELETE /admin/vehiculos-modelo/:id/foto`: solo admin.
+  - "Mis vehículos" muestra la foto del modelo del catálogo; un vehículo cargado a mano no tiene foto.
+- **Seguridad de la subida:**
+  - Solo JPEG, PNG o WebP de hasta 2 MB. Se verifica la **firma del archivo**, no solo el Content-Type declarado. Un texto declarado como PNG se rechaza con `FOTO_INVALIDA`.
+  - El enlace a la fuente acepta solo http(s).
+  - No se agregaron dependencias (`express.raw` en la ruta, sin multer).
+- **Seed:** inserta la foto inicial solo si el modelo no tiene una (`ON CONFLICT DO NOTHING`), así volver a sembrar no pisa una foto subida por el administrador. La imagen Docker copia las fotos junto al código compilado.
+- **Interfaz:**
+  - Foto del vehículo elegido en el buscador, con su crédito.
+  - Miniatura en la lista de "Mis vehículos" y foto grande en el detalle.
+  - En administración, miniatura por modelo y un formulario para agregar, cambiar o quitar la foto, que pide el crédito y recuerda usar solo imágenes con permiso.
+- **Pendiente para el autor:** si alguna foto no convence (Dolphin Mini y Kwid están de atrás), se puede reemplazar desde Administración → Catálogo.
