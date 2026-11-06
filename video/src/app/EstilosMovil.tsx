@@ -4,6 +4,7 @@
 // Los elementos "fixed" de la app se fijan al celular (absolute dentro de la pantalla).
 import marco from '../../../web/src/components/Marco/Marco.module.css';
 import ui from '../../../web/src/components/ui/ui.module.css';
+import home from '../../../web/src/pages/Home/Home.module.css';
 
 export const CLASE_CELULAR = 'pantalla-celular';
 
@@ -20,6 +21,10 @@ ${p(marco.contenido)} {
   padding: var(--espacio-5) var(--espacio-4) calc(var(--alto-nav-inferior) + var(--espacio-7));
 }
 ${p(marco.avisoDemo)} { position: absolute; bottom: calc(var(--alto-nav-inferior) + var(--espacio-2)); }
+${p(home.saludo)} { display: flex; }
+${p(home.tarjeta)} { padding: 0; border-radius: 0; background: none; box-shadow: none; }
+${p(home.grilla)} { display: flex; gap: var(--espacio-4); }
+${p(home.accesos)} { display: none; }
 `;
 
 export function EstilosMovil() {

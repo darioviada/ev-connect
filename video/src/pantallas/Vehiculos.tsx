@@ -16,6 +16,7 @@ import { kwh, nombreConector } from '../../../web/src/dominio/formato';
 import { autonomiaKm } from '../../../web/src/dominio/vehiculo';
 import vs from '../../../web/src/pages/Vehiculos/Vehiculos.module.css';
 import { CATALOGO } from '../datos/vehiculos';
+import { ListaDesplegada } from '../marco/ListaDesplegada';
 import { MarcoApp } from './MarcoApp';
 
 /** Igual que chipsDe() de la app; `p` (0 a 1) hace que los valores "se completen" al elegir el modelo. */
@@ -116,7 +117,16 @@ export function PantallaAgregarVehiculo({
               </option>
             ))}
           </select>
-          {desplegado && <ListaDesplegada resaltado={resaltado} />}
+          {desplegado && (
+            <ListaDesplegada
+              grupos={[{ opciones: CATALOGO.map((m) => `${m.marca} ${m.modelo}`) }]}
+              resaltada={
+                resaltado >= 0
+                  ? `${CATALOGO[resaltado]!.marca} ${CATALOGO[resaltado]!.modelo}`
+                  : null
+              }
+            />
+          )}
         </div>
         <span className={vs.etiqueta}>Batería, consumo y conector</span>
         {modelo ? (
@@ -129,42 +139,6 @@ export function PantallaAgregarVehiculo({
         </Boton>
       </form>
     </MarcoApp>
-  );
-}
-
-/** Lista abierta del selector de modelo (ocupa el lugar del menú nativo). */
-function ListaDesplegada({ resaltado }: { resaltado: number }) {
-  return (
-    <div
-      style={{
-        position: 'absolute',
-        top: '100%',
-        left: 0,
-        right: 0,
-        zIndex: 20,
-        marginTop: 6,
-        padding: 6,
-        borderRadius: 'var(--radio-campo)',
-        background: 'var(--color-superficie)',
-        border: '1px solid var(--color-borde)',
-        boxShadow: '0 12px 32px rgb(27 29 26 / 0.18)',
-      }}
-    >
-      {CATALOGO.map((m, i) => (
-        <div
-          key={m.id}
-          style={{
-            padding: '9px 12px',
-            borderRadius: 8,
-            background: i === resaltado ? 'var(--color-primario-claro)' : 'transparent',
-            color: i === resaltado ? 'var(--color-primario)' : 'var(--color-texto)',
-            fontWeight: i === resaltado ? 600 : 400,
-          }}
-        >
-          {m.marca} {m.modelo}
-        </div>
-      ))}
-    </div>
   );
 }
 

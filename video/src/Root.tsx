@@ -14,6 +14,7 @@ import { Escena01Apertura } from './escenas/Escena01Apertura';
 import { Escena02Roles } from './escenas/Escena02Roles';
 import { Escena03Acceso } from './escenas/Escena03Acceso';
 import { Escena04Vehiculos } from './escenas/Escena04Vehiculos';
+import { Escena05Busqueda } from './escenas/Escena05Busqueda';
 import { precargarImagenes } from './app/precarga';
 import { DOLPHIN_MINI, E208 } from './datos/vehiculos';
 import { Pendiente } from './escenas/Pendiente';
@@ -27,6 +28,7 @@ const COMPONENTES: Partial<Record<string, ComponentType>> = {
   roles: Escena02Roles,
   acceso: Escena03Acceso,
   vehiculos: Escena04Vehiculos,
+  busqueda: Escena05Busqueda,
 };
 
 function EscenaDe({ escena }: { escena: TramoEscena }) {
