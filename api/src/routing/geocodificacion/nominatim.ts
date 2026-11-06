@@ -11,8 +11,9 @@
 //   - addressdetails=1 agrega `address` (road, house_number, suburb, city, …) para mostrar "Calle 1234";
 //   - viewbox=lon1,lat1,lon2,lat2; con bounded=1 filtra a esa caja.
 // Estrategia (una misma calle existe en muchas ciudades del país, y la sola prioridad no alcanza):
-//   1) buscar solo cerca del punto de referencia (caja de ~16 km, bounded=1);
-//   2) si no hay resultados, buscar en todo el país.
+//   - direcciones (con altura): 1) solo cerca del punto de referencia (caja de ~16 km, bounded=1);
+//     2) si no hay resultados, en todo el país priorizando lo cercano (bounded=0);
+//   - barrios y ciudades (sin número): directo en todo el país priorizando lo cercano.
 // Se expanden abreviaturas habituales ("Bv" → "Bulevar", "Gral" → "General") que Nominatim no reconoce.
 import type { LatLng } from '../tipos.js';
 import { normalizarTexto } from './static.js';
@@ -27,6 +28,8 @@ export const URL_NOMINATIM = 'https://nominatim.openstreetmap.org/search';
 export const USER_AGENT_NOMINATIM = 'EVConnect-TFG-demo/0.1 (demo academica de un trabajo final)';
 /** Medio lado de la caja de búsqueda local alrededor del punto de referencia (~16 km). */
 const RADIO_LOCAL_GRADOS = 0.15;
+/** Medio lado de la caja de prioridad (sin excluir resultados) para la búsqueda nacional (~55 km). */
+const RADIO_PRIORIDAD_GRADOS = 0.5;
 
 const ABREVIATURAS: [RegExp, string][] = [
   [/\b(?:bv|bvd|blvd)\.?(?=\s)/giu, 'Bulevar'],
@@ -114,11 +117,14 @@ export class NominatimProvider implements GeocodingProvider {
     const enCache = this.#cache.get(clave);
     if (enCache && enCache.vence > this.#o.ahora()) return enCache.lugares;
 
-    // 1) Cerca del punto de referencia; 2) si no hay nada, en todo el país.
-    let datos = cerca ? await this.#consultar(texto, cerca) : [];
-    if (datos.length === 0) datos = await this.#consultar(texto, undefined);
-
+    // Direcciones (tienen altura): 1) solo cerca del punto de referencia; 2) si no hay nada, en todo
+    // el país priorizando lo cercano. Barrios y ciudades (sin número): directo en todo el país con
+    // prioridad, porque la búsqueda local encuentra calles homónimas ("Villa Carlos Paz" →
+    // "Variante Carlos Paz" de Córdoba).
     const pidioAltura = /\d/.test(texto);
+    let datos = cerca && pidioAltura ? await this.#consultar(texto, cerca, 'solo-cerca') : [];
+    if (datos.length === 0) datos = await this.#consultar(texto, cerca, 'priorizar-cerca');
+
     const lugares = datos
       .map((d) => {
         // Si se pidió una altura y OpenStreetMap no la tiene, el punto es el de la calle: se avisa.
@@ -141,8 +147,15 @@ export class NominatimProvider implements GeocodingProvider {
     return lugares;
   }
 
-  /** Un pedido a Nominatim (respeta 1 pedido/segundo). Con `cerca`, solo dentro de la caja local. */
-  async #consultar(texto: string, cerca: LatLng | undefined): Promise<ResultadoNominatim[]> {
+  /**
+   * Un pedido a Nominatim (respeta 1 pedido/segundo). Con `cerca`: 'solo-cerca' filtra a la caja local
+   * (bounded=1); 'priorizar-cerca' busca en todo el país ordenando primero lo cercano (bounded=0).
+   */
+  async #consultar(
+    texto: string,
+    cerca: LatLng | undefined,
+    alcance: 'solo-cerca' | 'priorizar-cerca',
+  ): Promise<ResultadoNominatim[]> {
     const espera = this.#ultimoPedido + this.#o.intervaloMinimoMs - this.#o.ahora();
     if (espera > 0) await this.#o.esperar(espera);
     this.#ultimoPedido = this.#o.ahora();
@@ -156,10 +169,10 @@ export class NominatimProvider implements GeocodingProvider {
       'accept-language': 'es',
     });
     if (cerca) {
-      const r = RADIO_LOCAL_GRADOS;
+      const r = alcance === 'solo-cerca' ? RADIO_LOCAL_GRADOS : RADIO_PRIORIDAD_GRADOS;
       const caja = [cerca.lng - r, cerca.lat + r, cerca.lng + r, cerca.lat - r];
       parametros.set('viewbox', caja.map((x) => Number(x.toFixed(4))).join(','));
-      parametros.set('bounded', '1');
+      parametros.set('bounded', alcance === 'solo-cerca' ? '1' : '0');
     }
     const url = new URL(URL_NOMINATIM);
     url.search = parametros.toString();

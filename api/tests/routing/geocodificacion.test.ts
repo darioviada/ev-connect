@@ -193,9 +193,24 @@ describe('Nominatim: direcciones', () => {
     const r = await geo.buscar('San Martín 100, Rosario', { cerca: { lat: -31.42, lng: -64.19 } });
     expect(fetch).toHaveBeenCalledTimes(2);
     const [segunda] = fetch.mock.calls[1]! as unknown as [URL];
-    expect(segunda.searchParams.has('viewbox')).toBe(false);
+    // segundo paso: todo el país, priorizando lo cercano (caja de ±0,5° sin filtrar)
+    expect(segunda.searchParams.get('viewbox')).toBe('-64.7,-30.9,-63.7,-31.9');
+    expect(segunda.searchParams.get('bounded')).toBe('0');
     expect(momentos[1]! - momentos[0]!).toBeGreaterThanOrEqual(1000);
     expect(r).toHaveLength(1);
+  });
+
+  it('barrios y ciudades (sin número) se buscan en todo el país, solo priorizando lo cercano', async () => {
+    const fetch = vi.fn(async () => respuestaNominatim());
+    const geo = new NominatimProvider({
+      fetch: fetch as unknown as typeof globalThis.fetch,
+      ...relojSimulado(),
+    });
+    // Evita que una calle homónima cercana ("Variante Carlos Paz") gane sobre la ciudad
+    await geo.buscar('Villa Carlos Paz', { cerca: { lat: -31.42, lng: -64.19 } });
+    expect(fetch).toHaveBeenCalledTimes(1);
+    const [url] = fetch.mock.calls[0]! as unknown as [URL];
+    expect(url.searchParams.get('bounded')).toBe('0');
   });
 
   it('expande abreviaturas de calles ("Bv" → "Bulevar", "Gral" → "General")', async () => {
