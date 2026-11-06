@@ -137,3 +137,9 @@
   color: var(--color-texto-secundario);
   cursor: pointer;
 }
+
+.atribucion {
+  color: var(--color-texto-secundario);
+  font-size: 0.75rem;
+  text-align: right;
+}

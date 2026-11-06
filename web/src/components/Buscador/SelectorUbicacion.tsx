@@ -1,9 +1,12 @@
 // Ubicación por GPS del navegador, por texto (geocodificación al confirmar: sin autocompletado, por la
 // política de Nominatim) o por clic en el mapa (el mapa se carga recién al abrirlo).
+// Con Nominatim se buscan direcciones exactas ("Colón 1234"); con la lista fija, solo barrios y ciudades.
 import { lazy, Suspense, useId, useState, type FormEvent } from 'react';
 import { mensajeDeError } from '../../api/cliente';
 import { apiGeocodificar } from '../../api/endpoints';
 import type { LatLng, Lugar } from '../../api/tipos';
+import { config } from '../../config';
+import { useConfiguracion } from '../../hooks/consultas';
 import { Boton, BotonIcono, Cargando, claseControl, Icono } from '../ui';
 import s from './Buscador.module.css';
 
@@ -17,14 +20,21 @@ export function SelectorUbicacion({
   etiqueta,
   valor,
   onCambio,
+  cerca,
 }: {
   etiqueta: string;
   valor: UbicacionElegida | null;
   onCambio: (u: UbicacionElegida | null) => void;
+  /** Punto de referencia para priorizar resultados cercanos (p. ej. el origen al buscar el destino). */
+  cerca?: LatLng | null;
 }) {
   const id = useId();
+  const configuracion = useConfiguracion();
+  const conDirecciones = configuracion.data?.geocodificacion === 'nominatim';
   const [texto, setTexto] = useState('');
   const [resultados, setResultados] = useState<Lugar[] | null>(null);
+  const [proveedor, setProveedor] = useState<string | null>(null);
+  const [aviso, setAviso] = useState<string | null>(null);
   const [buscando, setBuscando] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [mapaAbierto, setMapaAbierto] = useState(false);
@@ -35,8 +45,11 @@ export function SelectorUbicacion({
     setBuscando(true);
     setError(null);
     try {
-      const r = await apiGeocodificar(texto.trim());
+      // Se priorizan resultados cerca del punto ya elegido, del de referencia o del centro del mapa.
+      const r = await apiGeocodificar(texto.trim(), valor ?? cerca ?? config.centroMapa);
       setResultados(r.resultados);
+      setProveedor(r.proveedor);
+      setAviso(r.aviso ?? null);
     } catch (err) {
       setError(mensajeDeError(err));
       setResultados(null);
@@ -58,6 +71,11 @@ export function SelectorUbicacion({
     );
   }
 
+  const sinResultados =
+    proveedor === 'nominatim'
+      ? 'No encontramos esa dirección. Probá agregando la ciudad (por ejemplo, “Colón 1234, Córdoba”) o marcala en el mapa.'
+      : 'Esta búsqueda reconoce barrios y ciudades. Para una dirección exacta, marcá el punto en el mapa.';
+
   return (
     <div className={s.bloque}>
       <label htmlFor={id} className={s.etiqueta}>
@@ -74,13 +92,19 @@ export function SelectorUbicacion({
         <input
           id={id}
           className={claseControl}
-          placeholder="Dirección o barrio + Enter"
+          placeholder={conDirecciones ? 'Calle y número, barrio o ciudad' : 'Barrio o ciudad'}
           value={texto}
           onChange={(e) => setTexto(e.target.value)}
           autoComplete="off"
+          aria-describedby={`${id}-ayuda`}
         />
-        <BotonIcono icono="buscar" etiqueta="Buscar dirección" type="submit" />
+        <BotonIcono icono="buscar" etiqueta="Buscar" type="submit" />
       </form>
+      <p id={`${id}-ayuda`} className={s.ayuda}>
+        {conDirecciones
+          ? 'Escribí la dirección y apretá Enter.'
+          : 'Escribí un barrio o una ciudad y apretá Enter, o marcá el punto en el mapa.'}
+      </p>
 
       {buscando && <p className={s.ayuda}>Buscando…</p>}
       {error && (
@@ -88,11 +112,14 @@ export function SelectorUbicacion({
           {error}
         </p>
       )}
+      {aviso && (
+        <p className={s.error} role="status">
+          {aviso}
+        </p>
+      )}
       {resultados && (
         <ul className={s.resultadosLugar} aria-label="Lugares encontrados">
-          {resultados.length === 0 && (
-            <li className={s.ayuda}>No encontramos ese lugar. Probá marcarlo en el mapa.</li>
-          )}
+          {resultados.length === 0 && <li className={s.ayuda}>{sinResultados}</li>}
           {resultados.map((l) => (
             <li key={`${l.lat},${l.lng}`}>
               <button
@@ -100,6 +127,7 @@ export function SelectorUbicacion({
                 onClick={() => {
                   onCambio({ lat: l.lat, lng: l.lng, nombre: l.nombre });
                   setResultados(null);
+                  setAviso(null);
                   setTexto('');
                 }}
               >
@@ -108,6 +136,9 @@ export function SelectorUbicacion({
               </button>
             </li>
           ))}
+          {proveedor === 'nominatim' && resultados.length > 0 && (
+            <li className={s.atribucion}>Direcciones: © colaboradores de OpenStreetMap</li>
+          )}
         </ul>
       )}
 

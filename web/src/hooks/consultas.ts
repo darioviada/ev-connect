@@ -1,8 +1,18 @@
 // Consultas compartidas (TanStack Query). Las claves agrupan los datos para invalidarlos juntos.
 import { useQuery } from '@tanstack/react-query';
-import { apiFavoritos, apiRecomendaciones, apiVehiculos } from '../api/endpoints';
+import { apiConfiguracion, apiFavoritos, apiRecomendaciones, apiVehiculos } from '../api/endpoints';
 import { useSesion } from '../auth/Sesion';
 import { aPedido, type Busqueda } from '../dominio/busqueda';
+
+/** Proveedores activos en la API (no cambian durante la sesión). */
+export function useConfiguracion() {
+  return useQuery({
+    queryKey: ['catalogo', 'configuracion'],
+    queryFn: apiConfiguracion,
+    staleTime: Infinity,
+    retry: 1,
+  });
+}
 
 export function useCatalogo() {
   return useQuery({

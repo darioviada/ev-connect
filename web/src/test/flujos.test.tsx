@@ -113,6 +113,9 @@ beforeEach(() => {
       },
     }),
     'POST /api/v1/recomendaciones': () => ({ body: RESULTADO }),
+    'GET /api/v1/configuracion': () => ({
+      body: { geocodificacion: 'static', proveedorRutas: 'offline', modoAuth: 'local' },
+    }),
   };
   vi.stubGlobal(
     'fetch',
@@ -228,6 +231,63 @@ describe('búsqueda como invitado (HU-006 a HU-009)', () => {
     );
     renderizar(`/resultados?b=${b}`);
     expect(await screen.findByText('Ninguno es compatible con tu conector.')).toBeInTheDocument();
+  });
+});
+
+describe('búsqueda de direcciones', () => {
+  it('con la lista fija pide barrio o ciudad y explica cómo marcar una dirección exacta', async () => {
+    marcarInvitado();
+    const usuario = userEvent.setup();
+    rutas['GET /api/v1/geocodificar'] = () => ({
+      body: { proveedor: 'static', resultados: [], aviso: null },
+    });
+    renderizar('/');
+    const campo = await screen.findByLabelText('Ubicación');
+    await waitFor(() => expect(campo).toHaveAttribute('placeholder', 'Barrio o ciudad'));
+    await usuario.type(campo, 'Colón 1234{Enter}');
+    expect(
+      await screen.findByText(/Para una dirección exacta, marcá el punto en el mapa/),
+    ).toBeInTheDocument();
+  });
+
+  it('con Nominatim busca direcciones y prioriza el destino cerca del origen', async () => {
+    marcarInvitado();
+    const usuario = userEvent.setup();
+    rutas['GET /api/v1/configuracion'] = () => ({
+      body: { geocodificacion: 'nominatim', proveedorRutas: 'offline', modoAuth: 'local' },
+    });
+    rutas['GET /api/v1/geocodificar'] = () => ({
+      body: {
+        proveedor: 'nominatim',
+        aviso: null,
+        resultados: [
+          {
+            nombre: 'Avenida Colón 1234',
+            descripcion: '1234, Avenida Colón, Alberdi, Córdoba',
+            lat: -31.41,
+            lng: -64.2,
+          },
+        ],
+      },
+    });
+    renderizar('/');
+    const campo = await screen.findByLabelText('Ubicación');
+    await waitFor(() =>
+      expect(campo).toHaveAttribute('placeholder', 'Calle y número, barrio o ciudad'),
+    );
+
+    await usuario.type(campo, 'Colón 1234{Enter}');
+    const resultado = await screen.findByRole('button', { name: /Avenida Colón 1234/ });
+    expect(screen.getByText(/© colaboradores de OpenStreetMap/)).toBeInTheDocument();
+    await usuario.click(resultado);
+
+    // En modo ruta, el destino se busca cerca del origen elegido
+    await usuario.click(screen.getByRole('button', { name: 'Ruta' }));
+    await usuario.type(screen.getByLabelText('Destino'), 'Carlos Paz{Enter}');
+    await waitFor(() => {
+      const ultimo = pedidos.filter((x) => x.url.startsWith('/api/v1/geocodificar')).at(-1)!;
+      expect(ultimo.url).toContain('cerca=-31.41000,-64.20000');
+    });
   });
 });
 

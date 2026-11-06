@@ -98,8 +98,17 @@ export const apiFavoritos = {
   borrarRuta: (id: string) => api<void>(`/rutas-guardadas/${id}`, { method: 'DELETE' }),
 };
 
-export const apiGeocodificar = (q: string) =>
-  api<{ proveedor: string; resultados: Lugar[] }>(`/geocodificar?q=${encodeURIComponent(q)}`);
+export const apiGeocodificar = (q: string, cerca?: LatLng | null) =>
+  api<{ proveedor: string; resultados: Lugar[]; aviso: string | null }>(
+    `/geocodificar?q=${encodeURIComponent(q)}${cerca ? `&cerca=${cerca.lat.toFixed(5)},${cerca.lng.toFixed(5)}` : ''}`,
+  );
+
+/** Datos públicos para adaptar la interfaz (proveedores activos). */
+export const apiConfiguracion = () =>
+  api<{ geocodificacion: 'static' | 'nominatim'; proveedorRutas: string; modoAuth: string }>(
+    '/configuracion',
+    { token: null },
+  );
 
 export const apiAdmin = {
   usuarios: (q = '') =>

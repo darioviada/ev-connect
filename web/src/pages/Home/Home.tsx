@@ -230,6 +230,7 @@ export function Home() {
                 etiqueta="Destino"
                 valor={f.destino}
                 onCambio={(destino) => cambiar({ destino })}
+                cerca={f.origen}
               />
             )}
           </div>
