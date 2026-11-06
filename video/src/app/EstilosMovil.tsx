@@ -7,6 +7,7 @@ import ui from '../../../web/src/components/ui/ui.module.css';
 import resultados from '../../../web/src/components/Resultados/Resultados.module.css';
 import detalle from '../../../web/src/pages/Detalle/Detalle.module.css';
 import home from '../../../web/src/pages/Home/Home.module.css';
+import publicar from '../../../web/src/pages/Publicar/Publicar.module.css';
 
 export const CLASE_CELULAR = 'pantalla-celular';
 
@@ -39,6 +40,9 @@ ${p(resultados.hoja)} {
 ${p(resultados.barraFlotante)} { left: var(--espacio-4); }
 ${p(resultados.asa)} { display: block; }
 ${p(detalle.columnas)} { display: flex; }
+${p(publicar.grilla)} { grid-template-columns: none; }
+${p(publicar.franja)} { grid-template-columns: 1fr 1fr; }
+${p(publicar.franja)} > :first-child { grid-column: 1 / -1; }
 `;
 
 export function EstilosMovil() {

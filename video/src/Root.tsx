@@ -17,6 +17,7 @@ import { Escena04Vehiculos } from './escenas/Escena04Vehiculos';
 import { Escena05Busqueda } from './escenas/Escena05Busqueda';
 import { Escena06Recomendaciones } from './escenas/Escena06Recomendaciones';
 import { Escena07Reserva } from './escenas/Escena07Reserva';
+import { Escena08Publicar } from './escenas/Escena08Publicar';
 import { precargarImagenes } from './app/precarga';
 import { DOLPHIN_MINI, E208 } from './datos/vehiculos';
 import { Pendiente } from './escenas/Pendiente';
@@ -33,6 +34,7 @@ const COMPONENTES: Partial<Record<string, ComponentType>> = {
   busqueda: Escena05Busqueda,
   recomendaciones: Escena06Recomendaciones,
   reserva: Escena07Reserva,
+  publicar: Escena08Publicar,
 };
 
 function EscenaDe({ escena }: { escena: TramoEscena }) {

@@ -55,7 +55,16 @@ function Pin({ pin }: { pin: PinMapa }) {
   );
 }
 
-export function MapaEstilizado({ trazo, pines }: { trazo: number; pines: readonly PinMapa[] }) {
+export function MapaEstilizado({
+  trazo,
+  pines,
+  conRecorrido = true,
+}: {
+  trazo: number;
+  pines: readonly PinMapa[];
+  /** false = solo el mapa (sin recorrido ni origen/destino), como el selector de ubicación. */
+  conRecorrido?: boolean;
+}) {
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden' }}>
       <svg
@@ -125,32 +134,38 @@ export function MapaEstilizado({ trazo, pines }: { trazo: number; pines: readonl
           </text>
         </g>
         {/* Recorrido (se dibuja de a poco) */}
-        <path
-          d={RECORRIDO}
-          pathLength={1}
-          fill="none"
-          stroke="#0c7f57"
-          strokeOpacity="0.85"
-          strokeWidth="5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeDasharray="1"
-          strokeDashoffset={1 - trazo}
-        />
+        {conRecorrido && (
+          <path
+            d={RECORRIDO}
+            pathLength={1}
+            fill="none"
+            stroke="#0c7f57"
+            strokeOpacity="0.85"
+            strokeWidth="5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeDasharray="1"
+            strokeDashoffset={1 - trazo}
+          />
+        )}
       </svg>
-      <span
-        className={mapa.origen}
-        style={{ position: 'absolute', left: CASA_XY.x - 10, top: CASA_XY.y - 10 }}
-      />
-      <span
-        className={mapa.destino}
-        style={{
-          position: 'absolute',
-          left: TRABAJO_XY.x - 10,
-          top: TRABAJO_XY.y - 20,
-          opacity: trazo > 0.98 ? 1 : 0,
-        }}
-      />
+      {conRecorrido && (
+        <>
+          <span
+            className={mapa.origen}
+            style={{ position: 'absolute', left: CASA_XY.x - 10, top: CASA_XY.y - 10 }}
+          />
+          <span
+            className={mapa.destino}
+            style={{
+              position: 'absolute',
+              left: TRABAJO_XY.x - 10,
+              top: TRABAJO_XY.y - 20,
+              opacity: trazo > 0.98 ? 1 : 0,
+            }}
+          />
+        </>
+      )}
       {pines.map((p) => (
         <Pin key={p.id} pin={p} />
       ))}
