@@ -17,6 +17,8 @@ export interface ZonaSeed {
   privados: number;
   grupo:
     'cordoba' | 'corredor-carlos-paz' | 'corredor-alta-gracia' | 'corredor-rn9' | 'otras-ciudades';
+  /** Zonas agregadas después (D-045): usan otra secuencia aleatoria para no alterar el resto del seed. */
+  secuenciaPropia?: boolean;
 }
 
 const ciudad = (
@@ -167,6 +169,7 @@ export const ZONAS: readonly ZonaSeed[] = [
     publicos: 1,
     privados: 1,
     grupo: 'corredor-rn9',
+    secuenciaPropia: true,
   },
   {
     clave: 'rn9-bell-ville',
@@ -178,6 +181,7 @@ export const ZONAS: readonly ZonaSeed[] = [
     publicos: 1,
     privados: 0,
     grupo: 'corredor-rn9',
+    secuenciaPropia: true,
   },
   {
     clave: 'rn9-marcos-juarez',
@@ -189,6 +193,7 @@ export const ZONAS: readonly ZonaSeed[] = [
     publicos: 1,
     privados: 1,
     grupo: 'corredor-rn9',
+    secuenciaPropia: true,
   },
   {
     clave: 'rn9-canada-de-gomez',
@@ -200,6 +205,7 @@ export const ZONAS: readonly ZonaSeed[] = [
     publicos: 1,
     privados: 0,
     grupo: 'corredor-rn9',
+    secuenciaPropia: true,
   },
   {
     clave: 'rn9-rosario',
@@ -211,6 +217,7 @@ export const ZONAS: readonly ZonaSeed[] = [
     publicos: 1,
     privados: 0,
     grupo: 'corredor-rn9',
+    secuenciaPropia: true,
   },
   {
     clave: 'rn9-san-nicolas',
@@ -222,6 +229,7 @@ export const ZONAS: readonly ZonaSeed[] = [
     publicos: 1,
     privados: 0,
     grupo: 'corredor-rn9',
+    secuenciaPropia: true,
   },
   {
     clave: 'rn9-san-pedro',
@@ -233,6 +241,7 @@ export const ZONAS: readonly ZonaSeed[] = [
     publicos: 1,
     privados: 0,
     grupo: 'corredor-rn9',
+    secuenciaPropia: true,
   },
   {
     clave: 'rn9-zarate',
@@ -244,11 +253,13 @@ export const ZONAS: readonly ZonaSeed[] = [
     publicos: 1,
     privados: 1,
     grupo: 'corredor-rn9',
+    secuenciaPropia: true,
   },
 
   // Destino de un viaje que no es posible (sin cargadores entre Córdoba y Mendoza): 1 público
   {
     clave: 'mendoza-centro',
+    secuenciaPropia: true,
     nombre: 'Centro',
     ciudad: 'Mendoza',
     lat: -32.8895,

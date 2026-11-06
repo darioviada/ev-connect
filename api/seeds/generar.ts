@@ -236,6 +236,9 @@ const HORARIO_ESTACIONAMIENTO: Franja[] = [
 /** Índices (en el orden de generación) de privados que quedan inactivos, para probar el filtro. */
 const PRIVADOS_INACTIVOS = new Set([7, 23]);
 
+/** Semilla de la secuencia aleatoria de las zonas agregadas después (D-045). */
+const SEMILLA_ZONAS_AGREGADAS = 20_261_106;
+
 const redondear = (x: number, decimales: number) => Number(x.toFixed(decimales));
 
 function nombreLugar(zona: ZonaSeed): string {
@@ -252,13 +255,16 @@ function crearCargadores(
   let iPrivado = 0;
   let iPublico = 0; // contador global: cargadores públicos de una misma zona reciben tipos de lugar distintos
 
-  const ubicar = (zona: ZonaSeed) => ({
-    lat: redondear(zona.lat + aleatorio.entre(-zona.dispersion, zona.dispersion), 6),
-    lng: redondear(zona.lng + aleatorio.entre(-zona.dispersion, zona.dispersion), 6),
-  });
-  const precio = ([min, max]: [number, number]) => Math.round(aleatorio.entre(min, max) / 10) * 10;
-
+  // Las zonas agregadas después (D-045) usan su propia secuencia: así no cambian los cargadores ni las
+  // reservas sintéticas que ya existían (la validación sigue comparando sobre los mismos datos).
+  const aleatorioPropio = crearAleatorio(SEMILLA_ZONAS_AGREGADAS);
   for (const zona of ZONAS) {
+    const azar = zona.secuenciaPropia ? aleatorioPropio : aleatorio;
+    const ubicar = (z: ZonaSeed) => ({
+      lat: redondear(z.lat + azar.entre(-z.dispersion, z.dispersion), 6),
+      lng: redondear(z.lng + azar.entre(-z.dispersion, z.dispersion), 6),
+    });
+    const precio = ([min, max]: [number, number]) => Math.round(azar.entre(min, max) / 10) * 10;
     for (let k = 0; k < zona.publicos; k++) {
       const enRuta = zona.grupo.startsWith('corredor');
       const plantilla = enRuta
@@ -287,7 +293,7 @@ function crearCargadores(
       const indice = iPrivado++;
       const dueno = anfitriones[indice % anfitriones.length]!;
       const apellido = dueno.nombre.split(' ').slice(1).join(' ');
-      const r = aleatorio.siguiente();
+      const r = azar.siguiente();
       const plantilla: Plantilla =
         r < 0.6
           ? { conector: 'TIPO_2', potencia: 7.4, precio: [250, 400] }
@@ -309,7 +315,7 @@ function crearCargadores(
         potencia: plantilla.potencia,
         precioKwh: precio(plantilla.precio),
         estado: PRIVADOS_INACTIVOS.has(indice) ? 'inactivo' : 'activo',
-        franjas: aleatorio.elegir(PATRONES_PRIVADO),
+        franjas: azar.elegir(PATRONES_PRIVADO),
         zona,
       });
     }

@@ -11,6 +11,8 @@ import {
   OfflineProvider,
   URL_ROUTE_MATRIX,
   velocidadMediaKmh,
+  factorCircuito,
+  duracionEstimadaH,
   type LatLng,
 } from '../../src/routing/index.js';
 
@@ -31,11 +33,21 @@ describe('OfflineProvider', () => {
     expect(velocidadMediaKmh(25.01)).toBe(60);
   });
 
+  it('en viajes largos el factor baja hacia 1.15 y se maneja a 90 km/h pasados los 80 km (D-045)', () => {
+    expect(factorCircuito(50)).toBe(1.35);
+    expect(factorCircuito(100)).toBeCloseTo(1.25);
+    expect(factorCircuito(150)).toBe(1.15);
+    expect(factorCircuito(700)).toBe(1.15);
+    expect(duracionEstimadaH(80)).toBeCloseTo(80 / 60);
+    expect(duracionEstimadaH(170)).toBeCloseTo(80 / 60 + 1);
+  });
+
   it('distancia = Haversine × 1.35 y duración según la velocidad media', async () => {
-    const r = await new OfflineProvider().matrix([{ lat: 0, lng: 0 }], [{ lat: 1, lng: 0 }]);
+    // 0,3° ≈ 33,4 km en línea recta (tramo corto: factor 1.35)
+    const r = await new OfflineProvider().matrix([{ lat: 0, lng: 0 }], [{ lat: 0.3, lng: 0 }]);
     const celda = r.celdas[0]![0]!;
-    expect(celda.distanciaM).toBe(Math.round(111_194.93 * 1.35));
-    expect(celda.duracionS).toBeCloseTo((150.113 / 60) * 3600, -1); // ~150 km a 60 km/h
+    expect(celda.distanciaM).toBe(Math.round(111_194.93 * 0.3 * 1.35));
+    expect(celda.duracionS).toBeCloseTo((45.034 / 60) * 3600, -1); // ~45 km a 60 km/h
     expect(celda.fuente).toBe('offline-estimado');
     expect(r.elementosConsultados).toBe(0);
   });

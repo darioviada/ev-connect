@@ -28,13 +28,14 @@ import { porViaje, preseleccionar, type Preseleccion } from './preseleccion.js';
 
 /**
  * Plan de viaje (D-045): corredor alrededor del trazado real o, sin trazado, de la recta. En viajes largos
- * la ruta se aparta de la recta (la RN 9 pasa ~50 km al norte a la altura de Villa María), así que sin
- * trazado el corredor crece con la longitud del viaje.
+ * la ruta se aparta mucho de la recta (camino a Rosario, la RN 9 pasa por Villa María, ~64 km al norte),
+ * así que sin trazado el corredor crece con la longitud del viaje: 20 % de lo que exceda los 50 km. Los
+ * viajes cortos (hasta 50 km en línea recta) no cambian.
  */
 const CORREDOR_VIAJE_TRAZADO_KM = 10;
 const CORREDOR_VIAJE_RECTA_MIN_KM = 20;
-const CORREDOR_RECTA_FRACCION = 0.12;
-const CORREDOR_RECTA_PRIMERA_FRACCION = 0.1;
+const CORREDOR_RECTA_FRACCION = 0.2;
+const CORREDOR_RECTA_DESDE_KM = 50;
 const LIMITE_CARGADORES_VIAJE = 300;
 
 /** Línea del viaje y anchos de corredor (primera parada y plan) según haya trazado real o no. */
@@ -43,10 +44,11 @@ function geometriaViaje(pedido: PedidoMotor, trazado: Trazado | null, corredorKm
     return { linea: trazado.puntos, corredorKm, corredorPlanKm: CORREDOR_VIAJE_TRAZADO_KM };
   }
   const rectaKm = haversineM(pedido.origen, pedido.destino!) / 1000;
+  const extraKm = CORREDOR_RECTA_FRACCION * Math.max(0, rectaKm - CORREDOR_RECTA_DESDE_KM);
   return {
     linea: [pedido.origen, pedido.destino!],
-    corredorKm: Math.max(corredorKm, CORREDOR_RECTA_PRIMERA_FRACCION * rectaKm),
-    corredorPlanKm: Math.max(CORREDOR_VIAJE_RECTA_MIN_KM, CORREDOR_RECTA_FRACCION * rectaKm),
+    corredorKm: Math.max(corredorKm, extraKm),
+    corredorPlanKm: Math.max(CORREDOR_VIAJE_RECTA_MIN_KM, extraKm),
   };
 }
 

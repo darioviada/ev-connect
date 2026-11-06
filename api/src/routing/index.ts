@@ -15,7 +15,14 @@ export {
   URL_ROUTE_MATRIX,
 } from './google.js';
 export { decodificarPolyline } from './polyline.js';
-export { estimarCelda, haversineM, OfflineProvider, velocidadMediaKmh } from './offline.js';
+export {
+  duracionEstimadaH,
+  estimarCelda,
+  factorCircuito,
+  haversineM,
+  OfflineProvider,
+  velocidadMediaKmh,
+} from './offline.js';
 export * from './tipos.js';
 
 /** Elige el proveedor según ROUTING_PROVIDER (ya resuelto en la config: auto → google si hay clave). */
