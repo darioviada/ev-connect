@@ -116,10 +116,9 @@ Todas las variables están en [`.env.example`](.env.example). Para usar servicio
 [docs/MANUAL_TASKS.md](docs/MANUAL_TASKS.md)):
 
 - **Amazon Cognito:** `AUTH_MODE=cognito` y las variables `COGNITO_*` / `VITE_COGNITO_*`.
-- **Google Routes API:** `GOOGLE_MAPS_API_KEY` y `ROUTING_PROVIDER=auto`. **Tiene costo por uso**: configurá antes alertas de presupuesto. La clave se usa solo en el backend.
+- **Google Routes API:** `GOOGLE_MAPS_API_KEY` y `ROUTING_PROVIDER=auto`. **Tiene costo por uso**
 - **Búsqueda de direcciones:** `GEOCODING_PROVIDER=nominatim` (por defecto; uso liviano según su política) o `static` (solo barrios y ciudades, sin servicios externos).
 
-Nunca subas el `.env` al repositorio: está en `.gitignore`.
 
 ## Estructura
 
@@ -129,10 +128,4 @@ Nunca subas el `.env` al repositorio: está en `.gitignore`.
 | `web/`  | Frontend: páginas, componentes, cliente de la API, sesión y estilos                                                                   |
 | `docs/` | Especificación, plan, guías, decisiones, mockups, capturas, resultados de la validación y licencias                                   |
 
-## Documentación
 
-- [docs/SPEC.md](docs/SPEC.md): especificación (fuente de verdad).
-- [docs/DECISIONES.md](docs/DECISIONES.md): desvíos y decisiones de implementación, incluidas las **diferencias con el informe**.
-- [docs/RUN_LOCAL.md](docs/RUN_LOCAL.md): cómo ejecutar la demo. [docs/AWS_DEPLOY.md](docs/AWS_DEPLOY.md): despliegue en AWS.
-- [docs/LICENCIAS.md](docs/LICENCIAS.md): licencias de terceros. Mapas © colaboradores de OpenStreetMap.
-- [docs/capturas/](docs/capturas/): capturas de cada pantalla. [docs/validacion/](docs/validacion/): resultados de la validación.

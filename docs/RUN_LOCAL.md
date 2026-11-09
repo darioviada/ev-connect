@@ -1,6 +1,5 @@
 # RUN_LOCAL — Cómo ejecutar la demo en tu máquina
 
-> Este documento es un **contrato**: Claude Code debe construir el proyecto de modo que estos pasos funcionen tal cual, y verificarlo al terminar.
 > No requiere cuentas de AWS ni de Google.
 
 ## Requisitos
@@ -18,7 +17,7 @@ docker compose up --build
 Abrir **http://localhost:3000**. La primera vez se crean las tablas y se cargan los datos de demostración automáticamente.
 Para apagar: `Ctrl+C` y `docker compose down` (agregar `-v` para borrar también los datos).
 
-## Opción B — Desarrollo (API y web con recarga en caliente)
+## Opción B — Desarrollo (API y web)
 ```bash
 npm install
 cp .env.example .env
@@ -35,16 +34,6 @@ npm run dev          # API en http://localhost:3000 y web en http://localhost:51
 | Usuario | `usuario@demo.local` | `Usuario123!` |
 También se puede crear un usuario nuevo desde "Registrarme". Sin iniciar sesión se puede buscar y obtener recomendaciones.
 
-## Guion de demostración (≈ 5 minutos)
-1. **Invitado:** en el Home elegir un vehículo del catálogo, marcar una ubicación (botón de pin o clic en el mapa), batería 45 % → ver la urgencia **Media** y la autonomía actual → "Buscar cargadores".
-2. En los resultados, abrir "¿Por qué lo recomendamos?" del primer cargador (desglose del score) y pasar a la vista de mapa.
-3. Repetir con batería 15 % (urgencia **Alta**) y con 85 % (urgencia **Baja**): cambia el orden de los resultados porque cambian las ponderaciones.
-4. Probar un vehículo con otro conector para mostrar el filtro de compatibilidad.
-5. Modo **Ruta**: origen en Córdoba y destino en Villa Carlos Paz → recomendaciones sobre el corredor con su desvío.
-6. Iniciar sesión como `usuario@demo.local`: guardar un vehículo propio, reservar el cargador recomendado y verlo en "Mis reservas". Intentar reservar el mismo horario con otra cuenta → conflicto.
-7. Publicar un cargador propio (clic en el mapa, conector, potencia, precio, franjas) y verlo aparecer en las búsquedas.
-8. Como `admin@demo.local`: abrir `/admin` (si está implementado) y deshabilitar un usuario.
-9. **Validación:** `npm run validate` y abrir `docs/validacion/resultados.md`.
 
 ## Pruebas y validación
 ```bash
